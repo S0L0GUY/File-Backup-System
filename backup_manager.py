@@ -4,6 +4,7 @@ Handles ZIP file creation, hash comparison, and backup updating operations.
 """
 
 from constants import FileLocations as FileDIR
+from temp_manager import TempManager
 import os
 import shutil
 import zipfile
@@ -19,15 +20,21 @@ def zip_temp_hold() -> str:
     Returns:
         str: The file path to the created ZIP archive.
     """
+    temp_path = TempManager.get_temp_path()
+    if temp_path is None:
+        raise RuntimeError(
+            "Temporary directory not initialized. "
+            "Call create_temp_path() first."
+        )
 
     zip_file_path = os.path.join(
-        FileDIR.TEMPORARY_HOLD_FILE_PATH,
+        temp_path,
         f"{FileDIR.BACKUP_FILE_NAME}.zip"
     )
     zip_file_absolute_path = os.path.abspath(zip_file_path)
 
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
-        for root, dirs, files in os.walk(FileDIR.TEMPORARY_HOLD_FILE_PATH):
+        for root, dirs, files in os.walk(temp_path):
             for file in files:
                 file_path = os.path.join(root, file)
                 file_absolute_path = os.path.abspath(file_path)
@@ -37,7 +44,7 @@ def zip_temp_hold() -> str:
                     file_path,
                     os.path.relpath(
                         file_path,
-                        FileDIR.TEMPORARY_HOLD_FILE_PATH
+                        temp_path
                     )
                 )
 

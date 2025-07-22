@@ -4,6 +4,7 @@ Handles temporary directory creation, file copying, and cleanup operations.
 """
 
 from constants import FileLocations as FileDIR
+from temp_manager import TempManager
 import os
 import shutil
 
@@ -11,6 +12,8 @@ import shutil
 def ignore_patterns(dir, files):
     """Define patterns to ignore during copying."""
     ignore_list = []
+    temp_path = TempManager.get_temp_path()
+
     for file in files:
         if file == '.git':
             ignore_list.append(file)
@@ -20,52 +23,49 @@ def ignore_patterns(dir, files):
             ignore_list.append(file)
         elif file.lower() == 'thumbs.db':
             ignore_list.append(file)
-        elif (os.path.abspath(os.path.join(dir, file)) ==
-              os.path.abspath(FileDIR.TEMPORARY_HOLD_FILE_PATH)):
+        elif (temp_path is not None and
+              os.path.abspath(os.path.join(dir, file)) ==
+              os.path.abspath(temp_path)):
             ignore_list.append(file)
 
     return ignore_list
 
 
-def handle_remove_readonly(func, path, exc):
-    """Handle read-only files on Windows by changing permissions."""
-    if os.path.exists(path):
-        os.chmod(path, 0o777)
-        func(path)
-
-
-def create_temp_path() -> None:
+def create_temp_path() -> str:
     """
-    Creates a temporary directory if it does not already exist.
-    Checks whether the directory specified by FileDIR.TEMPORARY_HOLD_FILE_PATH
-    exists.If it does not exist, the function creates the directory.
+    Creates a temporary directory using TempManager.
+    This creates a secure temporary directory with appropriate permissions
+    and returns the path to the created directory.
+
     Returns:
-        None
+        str: The path to the created temporary directory
     """
-
-    cleanup_temp_files()
-
-    os.makedirs(FileDIR.TEMPORARY_HOLD_FILE_PATH)
+    return TempManager.create_temp_path()
 
 
 def populate_temp_hold() -> None:
     """
     Recursively copies all files and folders from the locations specified in
-    FileDIR.ORIGINAL_FILE_LOCATIONS to the temporary hold directory defined by
-    FileDIR.TEMPORARY_HOLD_FILE_PATH.
+    FileDIR.ORIGINAL_FILE_LOCATIONS to the temporary hold directory.
     Preserves the directory structure relative to the source location.
     Excludes .git directories and other system/temporary files.
     Returns:
         None
     """
+    temp_path = TempManager.get_temp_path()
+    if temp_path is None:
+        raise RuntimeError(
+            "Temporary directory not initialized. "
+            "Call create_temp_path() first."
+        )
 
     for file_location in FileDIR.ORIGINAL_FILE_LOCATIONS:
         if os.path.exists(file_location):
             if os.path.isfile(file_location):
-                shutil.copy(file_location, FileDIR.TEMPORARY_HOLD_FILE_PATH)
+                shutil.copy(file_location, temp_path)
             elif os.path.isdir(file_location):
                 dest_dir = os.path.join(
-                    FileDIR.TEMPORARY_HOLD_FILE_PATH,
+                    temp_path,
                     os.path.basename(file_location)
                 )
                 shutil.copytree(
@@ -81,16 +81,8 @@ def populate_temp_hold() -> None:
 def cleanup_temp_files() -> None:
     """
     Removes the temporary hold directory if it exists.
-    This function checks if the directory specified by
-    FileDIR.TEMPORARY_HOLD_FILE_PATH exists, and if so,
-    deletes it along with all its contents.
-    Handles permission errors that may occur on Windows systems.
+    This function delegates to TempManager for cleanup operations.
     Returns:
         None
     """
-
-    if os.path.exists(FileDIR.TEMPORARY_HOLD_FILE_PATH):
-        shutil.rmtree(
-            FileDIR.TEMPORARY_HOLD_FILE_PATH,
-            onerror=handle_remove_readonly
-        )
+    TempManager.cleanup_temp_files()
