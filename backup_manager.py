@@ -23,14 +23,14 @@ def zip_temp_hold() -> str:
         FileDIR.TEMPORARY_HOLD_FILE_PATH,
         f"{FileDIR.BACKUP_FILE_NAME}.zip"
     )
-    zip_file_path_abs = os.path.abspath(zip_file_path)
+    zip_file_absolute_path = os.path.abspath(zip_file_path)
 
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
         for root, dirs, files in os.walk(FileDIR.TEMPORARY_HOLD_FILE_PATH):
             for file in files:
                 file_path = os.path.join(root, file)
-                file_path_abs = os.path.abspath(file_path)
-                if file_path_abs == zip_file_path_abs:
+                file_absolute_path = os.path.abspath(file_path)
+                if file_absolute_path == zip_file_absolute_path:
                     continue
                 zipf.write(
                     file_path,
