@@ -7,6 +7,7 @@ from constants import FileLocations as FileDIR
 import os
 import shutil
 import zipfile
+import hashlib
 
 
 def zip_temp_hold() -> str:
@@ -51,8 +52,8 @@ def get_existing_backup_hashes() -> list:
     reads its content and computes a hash value based on the file's content.
     The hash values are collected and returned as a list.
     Returns:
-        list: A list of hash values (integers) representing the contents of
-        existing backup files.
+        list: A list of hash values (strings) representing the SHA-256
+        hashes of existing backup files.
     """
 
     backup_hashes = []
@@ -64,29 +65,29 @@ def get_existing_backup_hashes() -> list:
                 os.path.isfile(backup_file_path)):
             with open(backup_file_path, 'rb') as f:
                 file_content = f.read()
-                backup_hashes.append(hash(file_content))
+                backup_hashes.append(hashlib.sha256(file_content).hexdigest())
 
     return backup_hashes
 
 
-def calculate_file_hash(file_path: str) -> int:
+def calculate_file_hash(file_path: str) -> str:
     """
-    Calculates the hash of a file's content.
+    Calculates the SHA-256 hash of a file's content.
     Args:
         file_path (str): Path to the file to hash.
     Returns:
-        int: Hash value of the file's content.
+        str: SHA-256 hash value of the file's content as a hexadecimal string.
     """
     with open(file_path, 'rb') as f:
-        return hash(f.read())
+        return hashlib.sha256(f.read()).hexdigest()
 
 
-def all_hashes_match(existing_hashes: list, new_hash: int) -> bool:
+def all_hashes_match(existing_hashes: list, new_hash: str) -> bool:
     """
     Checks if all hashes in the existing_hashes list match the new_hash.
     Args:
-        existing_hashes (list): A list of integer hash values to compare.
-        new_hash (int): The hash value to compare against each element in
+        existing_hashes (list): A list of string hash values to compare.
+        new_hash (str): The hash value to compare against each element in
         existing_hashes.
     Returns:
         bool: True if all elements in existing_hashes are equal to new_hash
