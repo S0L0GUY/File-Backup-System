@@ -23,11 +23,15 @@ def zip_temp_hold() -> str:
         FileDIR.TEMPORARY_HOLD_FILE_PATH,
         f"{FileDIR.BACKUP_FILE_NAME}.zip"
     )
+    zip_file_absolute_path = os.path.abspath(zip_file_path)
 
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
         for root, dirs, files in os.walk(FileDIR.TEMPORARY_HOLD_FILE_PATH):
             for file in files:
                 file_path = os.path.join(root, file)
+                file_absolute_path = os.path.abspath(file_path)
+                if file_absolute_path == zip_file_absolute_path:
+                    continue
                 zipf.write(
                     file_path,
                     os.path.relpath(
@@ -112,6 +116,9 @@ def update_all_backups(zip_file_path: str) -> None:
     for backup_location in FileDIR.BACKUP_LOCATIONS:
         file_dir = os.path.join(backup_location,
                                 f"{FileDIR.BACKUP_FILE_NAME}.zip")
+
+        os.makedirs(backup_location, exist_ok=True)
+
         if os.path.exists(file_dir):
             os.remove(file_dir)
 

@@ -16,6 +16,10 @@ def ignore_patterns(dir, files):
             ignore_list.append(file)
         elif file == '__pycache__':
             ignore_list.append(file)
+        elif file == 'desktop.ini':
+            ignore_list.append(file)
+        elif file.lower() == 'thumbs.db':
+            ignore_list.append(file)
         elif (os.path.abspath(os.path.join(dir, file)) ==
               os.path.abspath(FileDIR.TEMPORARY_HOLD_FILE_PATH)):
             ignore_list.append(file)
