@@ -32,7 +32,7 @@ def _send_windows_notification(title, message):
             $notification = New-Object System.Windows.Forms.NotifyIcon
             $notification.Icon = [System.Drawing.SystemIcons]::Information
             $notification.BalloonTipIcon = `
-                [System.Windows.Forms.ToolTipIcon]::Info
+            [System.Windows.Forms.ToolTipIcon]::Info
             $notification.BalloonTipText = "{message}"
             $notification.BalloonTipTitle = "{title}"
             $notification.Visible = $true
@@ -96,7 +96,7 @@ def _send_linux_notification(title, message):
                 ["notify-send", title, message],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=FileLocations.DEFAULT_TIMEOUT
             )
             if result.returncode == 0:
                 return
@@ -106,7 +106,7 @@ def _send_linux_notification(title, message):
                 ["zenity", "--info", "--title", title, "--text", message],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=FileLocations.DEFAULT_TIMEOUT
             )
             if result.returncode == 0:
                 return
@@ -116,7 +116,7 @@ def _send_linux_notification(title, message):
                 ["kdialog", "--title", title, "--passivepopup", message, "5"],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=FileLocations.DEFAULT_TIMEOUT
             )
             if result.returncode == 0:
                 return

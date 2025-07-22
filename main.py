@@ -9,7 +9,7 @@ from backup_manager import (
     get_existing_backup_hashes,
     calculate_file_hash,
     all_hashes_match,
-    update_all_backups,
+    update_all_backups
 )
 from constants import FileLocations
 
