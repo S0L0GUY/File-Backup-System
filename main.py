@@ -17,7 +17,8 @@ from constants import FileLocations
 def main():
     """Main execution function for the backup system."""
     print("Creating temporary file directory...")
-    create_temp_path()
+    temp_path = create_temp_path()
+    print(f"Created temporary directory: {temp_path}")
 
     print("Populating temporary hold with files...")
     populate_temp_hold()
