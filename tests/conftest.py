@@ -10,7 +10,7 @@ from unittest.mock import patch
 import sys
 
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+# Removed sys.path modification. Ensure the src directory is a proper package with __init__.py.
 
 
 @pytest.fixture
