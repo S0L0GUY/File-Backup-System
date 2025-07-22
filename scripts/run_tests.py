@@ -43,10 +43,10 @@ def main():
     os.chdir(script_dir)
 
     # Use virtual environment python if available
-    if os.path.exists(".venv\\Scripts\\python.exe"):
-        python_cmd = ".venv\\Scripts\\python.exe"
-    elif os.path.exists(".venv/Scripts/python.exe"):
-        python_cmd = ".venv/Scripts/python.exe"
+    if os.path.exists(os.path.join(".venv", "Scripts", "python.exe")):
+        python_cmd = os.path.join(".venv", "Scripts", "python.exe")
+    elif os.path.exists(os.path.join(".venv", "Scripts", "python.exe")):
+        python_cmd = os.path.join(".venv", "Scripts", "python.exe")
     else:
         python_cmd = "python"
 
