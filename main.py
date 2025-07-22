@@ -1,3 +1,4 @@
+from notification_manager import send_notification
 from file_operations import (
     create_temp_path,
     populate_temp_hold,
@@ -8,8 +9,9 @@ from backup_manager import (
     get_existing_backup_hashes,
     calculate_file_hash,
     all_hashes_match,
-    update_all_backups
+    update_all_backups,
 )
+from constants import FileLocations
 
 
 def main():
@@ -40,6 +42,15 @@ def main():
     print("Cleaning up temporary files...")
     cleanup_temp_files()
     print("Backup process completed successfully!")
+
+    locations_str = "\n".join(FileLocations.BACKUP_LOCATIONS)
+    send_notification(
+        "Backup Complete",
+        (
+            "Your file backup has finished successfully.\n"
+            f"Files saved to:\n{locations_str}"
+        )
+    )
 
 
 if __name__ == "__main__":

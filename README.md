@@ -7,16 +7,45 @@ A Python-based automated backup solution that creates ZIP archives of specified 
 - **Automated File Backup**: Recursively backs up specified directories
 - **Hash-Based Change Detection**: Only updates backups when file contents change
 - **Multiple Backup Locations**: Maintains copies across multiple storage locations
+- **Cross-Platform Support**: Works on Windows, macOS, and Linux
+- **Native Notifications**: Sends system notifications on all supported platforms
 - **Windows Integration**: Includes batch file for easy execution with admin privileges
 - **Smart Filtering**: Excludes system files like `.git` and `__pycache__` directories
 - **Temporary File Management**: Uses temporary directories for safe processing
 
 ## System Requirements
 
-- **Operating System**: Windows (tested on Windows with PowerShell)
+- **Operating System**: 
+  - Windows (with PowerShell support)
+  - macOS (with osascript support)
+  - Linux (with notify-send, zenity, or kdialog)
 - **Python**: Python 3.6 or higher
-- **Permissions**: Administrator privileges (for accessing system directories)
+- **Permissions**: Administrator/sudo privileges (for accessing system directories)
 - **Dependencies**: No external Python packages required (uses only standard library)
+
+### Platform-Specific Notification Requirements
+
+#### Windows
+- **Default**: Uses PowerShell for system tray notifications
+- **Enhanced**: Install BurntToast module for better toast notifications:
+  ```powershell
+  Install-Module -Name BurntToast
+  ```
+
+#### macOS
+- **Default**: Uses osascript (AppleScript) for native notifications
+- **Requirements**: No additional setup needed
+
+#### Linux
+- **Ubuntu/Debian**: Install libnotify for notify-send:
+  ```bash
+  sudo apt-get install libnotify-bin
+  ```
+- **CentOS/RHEL**: 
+  ```bash
+  sudo yum install libnotify
+  ```
+- **Alternative**: Works with zenity or kdialog if available
 
 ## Installation and Setup
 
@@ -223,15 +252,16 @@ if __name__ == "__main__":
 
 ### Architecture Overview
 
-The system is organized into four main modules:
+The system is organized into five main modules:
 
 ```
 File-Backup-System/
-├── main.py              # Main execution flow
-├── constants.py         # Configuration settings
-├── file_operations.py   # File handling operations
-├── backup_manager.py    # Backup creation and management
-└── run.bat             # Windows batch launcher
+├── main.py                  # Main execution flow
+├── constants.py             # Configuration settings
+├── file_operations.py       # File handling operations
+├── backup_manager.py        # Backup creation and management
+├── notification_manager.py  # Cross-platform notifications
+└── run.bat                 # Windows batch launcher
 ```
 
 ### Detailed Code Flow
@@ -285,7 +315,21 @@ Manages backup creation and verification:
 - **`all_hashes_match()`**: Compares new backup hash with existing ones
 - **`update_all_backups()`**: Copies new backup to all specified locations
 
-#### 4. Configuration (`constants.py`)
+#### 4. Cross-Platform Notifications (`notification_manager.py`)
+
+Provides native notifications across different operating systems:
+
+- **`send_notification()`**: Main function that detects OS and routes to appropriate handler
+- **`_send_windows_notification()`**: Uses PowerShell with BurntToast or system tray fallback
+- **`_send_macos_notification()`**: Uses osascript (AppleScript) for native macOS notifications
+- **`_send_linux_notification()`**: Tries notify-send, zenity, or kdialog in order
+
+**Platform Detection:**
+- Automatically detects the operating system using `platform.system()`
+- Gracefully falls back to console output if no notification system is available
+- Handles special characters and escaping for each platform
+
+#### 5. Configuration (`constants.py`)
 
 Centralizes all configuration in the `FileLocations` class:
 - Source directories to backup
@@ -293,7 +337,7 @@ Centralizes all configuration in the `FileLocations` class:
 - Temporary processing directory
 - Backup file naming
 
-#### 5. Windows Launcher (`run.bat`)
+#### 6. Windows Launcher (`run.bat`)
 
 Provides Windows integration:
 - Checks for administrator privileges
