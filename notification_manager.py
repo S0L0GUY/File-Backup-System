@@ -1,6 +1,7 @@
 import subprocess
 import platform
 import shutil
+from constants import FileLocations
 
 
 def send_notification(title, message):
@@ -24,8 +25,7 @@ def _send_windows_notification(title, message):
         powershell_command = f'''
         if (Get-Module -ListAvailable -Name BurntToast) {{
             Import-Module BurntToast
-            New-BurntToastNotification -Text "{title}", "{message}" `
-                -AppLogo "" -Silent
+            New-BurntToastNotification -Text "{title}", "{message}" -Silent
         }} else {{
             # Fallback to system tray balloon (older but more reliable)
             Add-Type -AssemblyName System.Windows.Forms
@@ -46,15 +46,17 @@ def _send_windows_notification(title, message):
              "-Command", powershell_command],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=FileLocations.DEFAULT_TIMEOUT
         )
 
         if result.returncode != 0:
+            escaped_title = title.replace('"', '`"').replace("'", "`'")
+            escaped_message = message.replace('"', '`"').replace("'", "`'")
             msg_cmd = (f'[System.Windows.Forms.MessageBox]::Show('
-                       f'"{message}", "{title}")')
+                       f'"{escaped_message}", "{escaped_title}")')
             subprocess.run(
                 ["powershell", "-NoProfile", "-Command", msg_cmd],
-                timeout=5
+                timeout=FileLocations.DEFAULT_TIMEOUT
             )
 
     except Exception as e:

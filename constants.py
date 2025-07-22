@@ -9,3 +9,6 @@ class FileLocations:
     TEMPORARY_HOLD_FILE_PATH = "C:/temp_hold"
     # Name of the zip file created for backup
     BACKUP_FILE_NAME = "backup"
+
+    # Default timeout for subprocess calls
+    DEFAULT_TIMEOUT = 10  # seconds

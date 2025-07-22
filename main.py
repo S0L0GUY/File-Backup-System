@@ -47,7 +47,7 @@ def main():
     send_notification(
         "Backup Complete",
         (
-            "Your file backup has finished successfully.\n"
+            "Your file backup has finished successfully. "
             f"Files saved to:\n{locations_str}"
         )
     )
