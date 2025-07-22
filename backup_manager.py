@@ -1,3 +1,8 @@
+"""
+Backup management module for the backup system.
+Handles ZIP file creation, hash comparison, and backup updating operations.
+"""
+
 from constants import FileLocations as FileDIR
 from temp_manager import TempManager
 from logging_config import get_logger
