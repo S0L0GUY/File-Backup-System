@@ -28,6 +28,8 @@ def zip_temp_hold() -> str:
         for root, dirs, files in os.walk(FileDIR.TEMPORARY_HOLD_FILE_PATH):
             for file in files:
                 file_path = os.path.join(root, file)
+                if file_path == zip_file_path:
+                    continue
                 zipf.write(
                     file_path,
                     os.path.relpath(

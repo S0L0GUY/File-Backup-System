@@ -3,7 +3,7 @@ class FileLocations:
     ORIGINAL_FILE_LOCATIONS = ["C:/Users/world/Downloads"]
 
     # All of the locations where backups will be stored
-    BACKUP_LOCATIONS = ["C:/"]
+    BACKUP_LOCATIONS = ["C:/Backups"]
 
     # Temporary hold directory for files before zipping
     TEMPORARY_HOLD_FILE_PATH = "C:/temp_hold"
