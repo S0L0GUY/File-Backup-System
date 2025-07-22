@@ -114,6 +114,9 @@ def update_all_backups(zip_file_path: str) -> None:
     for backup_location in FileDIR.BACKUP_LOCATIONS:
         file_dir = os.path.join(backup_location,
                                 f"{FileDIR.BACKUP_FILE_NAME}.zip")
+
+        os.makedirs(backup_location, exist_ok=True)
+
         if os.path.exists(file_dir):
             os.remove(file_dir)
 
