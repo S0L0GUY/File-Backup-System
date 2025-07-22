@@ -36,12 +36,16 @@ echo PASSED: Code formatting
 
 echo.
 echo [3/4] Running unit tests...
+setlocal
+set PYTHONPATH=%CD%\src
 python -m pytest tests/ -v
 if %ERRORLEVEL% neq 0 (
+    endlocal
     echo FAILED: Unit tests failed
     pause
     exit /b 1
 )
+endlocal
 echo PASSED: Unit tests
 
 echo.
