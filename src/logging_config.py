@@ -12,8 +12,9 @@ class BackupLogger:
     _log_file = None
 
     @classmethod
-    def setup_logging(cls, log_level=logging.INFO, log_to_file=True,
-                      log_directory="logs"):
+    def setup_logging(
+        cls, log_level=logging.INFO, log_to_file=True, log_directory="logs"
+    ):
         """
         Set up centralized logging for the backup system.
 
@@ -28,14 +29,14 @@ class BackupLogger:
         if cls._logger is not None:
             return cls._logger
 
-        cls._logger = logging.getLogger('backup_system')
+        cls._logger = logging.getLogger("backup_system")
         cls._logger.setLevel(log_level)
 
         cls._logger.handlers.clear()
 
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
 
         console_handler = logging.StreamHandler(sys.stdout)
@@ -48,13 +49,11 @@ class BackupLogger:
                 log_path = Path(log_directory)
                 log_path.mkdir(exist_ok=True)
 
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                cls._log_file = log_path / f'backup_system_{timestamp}.log'
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                cls._log_file = log_path / f"backup_system_{timestamp}.log"
 
                 file_handler = logging.handlers.RotatingFileHandler(
-                    cls._log_file,
-                    maxBytes=10*1024*1024,  # 10MB
-                    backupCount=5
+                    cls._log_file, maxBytes=10 * 1024 * 1024, backupCount=5  # 10MB
                 )
                 file_handler.setLevel(log_level)
                 file_handler.setFormatter(formatter)
@@ -82,7 +81,7 @@ class BackupLogger:
             cls.setup_logging()
 
         if name:
-            return logging.getLogger(f'backup_system.{name}')
+            return logging.getLogger(f"backup_system.{name}")
         return cls._logger
 
     @classmethod
@@ -118,6 +117,7 @@ def log_function_call(func):
     Returns:
         Decorated function with logging
     """
+
     def wrapper(*args, **kwargs):
         logger = get_logger(func.__module__)
         function_name = func.__name__
@@ -163,7 +163,6 @@ class LoggedOperation:
             self.logger.info(f"Successfully completed {self.operation_name}")
         else:
             self.logger.error(
-                f"Failed to complete {self.operation_name}: {exc_val}",
-                exc_info=True
+                f"Failed to complete {self.operation_name}: {exc_val}", exc_info=True
             )
         return False

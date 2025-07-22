@@ -56,10 +56,7 @@ class TempManager:
             return temp_dir
 
         except Exception as e:
-            logger.error(
-                f"Failed to create temporary directory: {e}",
-                exc_info=True
-            )
+            logger.error(f"Failed to create temporary directory: {e}", exc_info=True)
             raise
 
     @classmethod
@@ -79,49 +76,55 @@ class TempManager:
         """
         logger = get_logger("temp_manager.cleanup_temp_files")
 
-        def handle_remove_readonly(func, path, exc):
-            """Handle read-only files on Windows by changing permissions."""
-            try:
-                if os.path.exists(path):
-                    logger.debug(f"Changing permissions for: {path}")
-                    os.chmod(path, 0o777)
-                    func(path)
-            except Exception as e:
-                logger.warning(f"Failed to handle readonly file {path}: {e}")
+        temp_path = cls.get_temp_path()
+        if temp_path is None:
+            logger.debug("No temporary directory to clean up.")
+            return
+
+        if not os.path.exists(temp_path):
+            logger.debug(f"Temporary directory already removed: {temp_path}")
+            cls.set_temp_path(None)
+            return
+
+        logger.debug(f"Cleaning up temporary directory: {temp_path}")
 
         try:
-            temp_path = cls.get_temp_path()
-            if temp_path is None:
-                logger.debug("No temporary directory to clean up")
-                return
-
-            if not os.path.exists(temp_path):
-                debug_msg = f"Temporary directory already removed: {temp_path}"
-                logger.debug(debug_msg)
-                cls.set_temp_path(None)
-                return
-
-            logger.debug(f"Removing temporary directory: {temp_path}")
-
-            # Count files for logging
-            file_count = 0
-            try:
-                for root, dirs, files in os.walk(temp_path):
-                    file_count += len(files)
-            except Exception:
-                pass  # Don't fail cleanup if we can't count files
-
-            if file_count > 0:
-                logger.debug(f"Removing {file_count} temporary files...")
-
-            shutil.rmtree(temp_path, onerror=handle_remove_readonly)
-            cls.set_temp_path(None)
-
-            logger.debug("Temporary directory cleanup completed successfully")
-
+            shutil.rmtree(temp_path, onerror=cls._handle_remove_readonly)
+            logger.info(f"Successfully removed temporary directory: {temp_path}")
         except Exception as e:
             logger.error(
-                f"Error during temporary directory cleanup: {e}", exc_info=True
+                f"Failed to remove temporary directory {temp_path}: {e}", exc_info=True
             )
-            # Don't raise exception for cleanup failures to avoid masking
-            # the original error that caused cleanup to be called
+            # Still set path to None to prevent reuse of a partially deleted directory
+        finally:
+            cls.set_temp_path(None)
+
+    @staticmethod
+    def _handle_remove_readonly(func, path, exc_info):
+        """
+        Error handler for shutil.rmtree.
+        If a file is read-only, it changes its permissions and retries the removal.
+        This is a common issue on Windows.
+        """
+        logger = get_logger("temp_manager._handle_remove_readonly")
+        # Check if the error is a PermissionError
+        if not isinstance(exc_info[1], PermissionError):
+            # If not, re-raise the exception
+            raise exc_info[1]
+
+        logger.warning(
+            f"Permission error removing {path}. Attempting to change permissions."
+        )
+        try:
+            # Change the file permissions to be writable
+            os.chmod(path, 0o777)
+            # Retry the function that failed (e.g., os.remove)
+            func(path)
+            logger.debug(f"Successfully changed permissions and removed {path}")
+        except Exception as e:
+            logger.error(
+                f"Failed to remove {path} even after changing permissions: {e}",
+                exc_info=True,
+            )
+            # Re-raise the original exception if the retry fails
+            raise exc_info[1]

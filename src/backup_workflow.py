@@ -163,8 +163,7 @@ def _send_interruption_notification(logger):
     """Send notification for user interruption."""
     try:
         send_notification(
-            "Backup Interrupted",
-            "The backup process was interrupted by the user."
+            "Backup Interrupted", "The backup process was interrupted by the user."
         )
     except Exception:
         pass  # Ignore notification errors during interruption

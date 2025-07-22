@@ -12,6 +12,31 @@ import zipfile
 import hashlib
 
 
+def _validate_temp_path(temp_path: str) -> None:
+    """Validates the temporary path."""
+    if not os.path.exists(temp_path):
+        raise FileNotFoundError(f"Temporary directory not found: {temp_path}")
+
+
+def _add_file_to_zip(zipf, file_path, temp_path, zip_file_absolute_path):
+    """Adds a single file to the zip archive, returning its size."""
+    logger = get_logger("backup_manager._add_file_to_zip")
+    file_absolute_path = os.path.abspath(file_path)
+
+    if file_absolute_path == zip_file_absolute_path:
+        return 0
+
+    try:
+        file_size = os.path.getsize(file_path)
+        arcname = os.path.relpath(file_path, temp_path)
+        zipf.write(file_path, arcname)
+        logger.debug(f"Added to ZIP: {arcname} ({file_size} bytes)")
+        return file_size
+    except (OSError, PermissionError) as e:
+        logger.warning(f"Failed to add file to ZIP: {file_path} - {e}")
+        return 0
+
+
 def zip_temp_hold() -> str:
     """
     Creates a ZIP archive of all files located in the temporary hold directory.
@@ -28,64 +53,37 @@ def zip_temp_hold() -> str:
         PermissionError: If unable to create ZIP file due to permissions.
         OSError: If there are issues accessing files or directories.
     """
-    logger = get_logger('backup_manager.zip_temp_hold')
-
+    logger = get_logger("backup_manager.zip_temp_hold")
     try:
         temp_path = TempManager.get_temp_path()
         if temp_path is None:
             raise RuntimeError(
-                "Temporary directory not initialized. "
-                "Call create_temp_path() first."
+                "Temporary directory not initialized. " "Call create_temp_path() first."
             )
+        _validate_temp_path(temp_path)
 
-        if not os.path.exists(temp_path):
-            error_msg = f"Temporary directory not found: {temp_path}"
-            raise FileNotFoundError(error_msg)
-
-        zip_file_path = os.path.join(
-            temp_path,
-            f"{FileDIR.BACKUP_FILE_NAME}.zip"
-        )
+        zip_file_path = os.path.join(temp_path, f"{FileDIR.BACKUP_FILE_NAME}.zip")
         zip_file_absolute_path = os.path.abspath(zip_file_path)
-
         logger.debug(f"Creating ZIP archive at: {zip_file_path}")
 
         file_count = 0
         total_size = 0
 
-        with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, dirs, files in os.walk(temp_path):
+        with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(temp_path):
                 for file in files:
                     file_path = os.path.join(root, file)
-                    file_absolute_path = os.path.abspath(file_path)
-
-                    # Skip the zip file itself
-                    if file_absolute_path == zip_file_absolute_path:
-                        continue
-
-                    try:
-                        file_size = os.path.getsize(file_path)
+                    file_size = _add_file_to_zip(
+                        zipf, file_path, temp_path, zip_file_absolute_path
+                    )
+                    if file_size > 0:
                         total_size += file_size
                         file_count += 1
-
-                        arcname = os.path.relpath(file_path, temp_path)
-                        zipf.write(file_path, arcname)
-                        debug_msg = (f"Added to ZIP: {arcname} "
-                                     f"({file_size} bytes)")
-                        logger.debug(debug_msg)
-
-                    except (OSError, PermissionError) as e:
-                        warn_msg = (f"Failed to add file to ZIP: "
-                                    f"{file_path} - {e}")
-                        logger.warning(warn_msg)
-                        # Continue with other files instead of failing
 
         if file_count == 0:
             logger.warning("No files were added to the ZIP archive")
         else:
-            info_msg = (f"ZIP archive created: {file_count} files, "
-                        f"{total_size} bytes")
-            logger.info(info_msg)
+            logger.info(f"ZIP archive created: {file_count} files, {total_size} bytes")
 
         return zip_file_path
 
@@ -110,31 +108,32 @@ def get_existing_backup_hashes() -> list:
         OSError: If there are issues accessing backup files.
         PermissionError: If unable to read backup files due to permissions.
     """
-    logger = get_logger('backup_manager.get_existing_backup_hashes')
+    logger = get_logger("backup_manager.get_existing_backup_hashes")
     backup_hashes = []
 
     try:
         for backup_location in FileDIR.BACKUP_LOCATIONS:
             backup_file_path = os.path.join(
-                backup_location,
-                f"{FileDIR.BACKUP_FILE_NAME}.zip"
+                backup_location, f"{FileDIR.BACKUP_FILE_NAME}.zip"
             )
 
             logger.debug(f"Checking for backup at: {backup_file_path}")
 
-            if (os.path.exists(backup_file_path) and
-                    os.path.isfile(backup_file_path)):
+            if os.path.exists(backup_file_path) and os.path.isfile(backup_file_path):
                 try:
-                    with open(backup_file_path, 'rb') as f:
+                    with open(backup_file_path, "rb") as f:
                         file_content = f.read()
                         file_hash = hashlib.sha256(file_content).hexdigest()
                         backup_hashes.append(file_hash)
-                        logger.debug(f"Hash computed for {backup_file_path}: "
-                                     f"{file_hash[:16]}...")
+                        logger.debug(
+                            f"Hash computed for {backup_file_path}: "
+                            f"{file_hash[:16]}..."
+                        )
 
                 except (OSError, PermissionError) as e:
-                    logger.warning(f"Failed to read backup file "
-                                   f"{backup_file_path}: {e}")
+                    logger.warning(
+                        f"Failed to read backup file " f"{backup_file_path}: {e}"
+                    )
                     # Continue with other backup locations
             else:
                 logger.debug(f"Backup file not found: {backup_file_path}")
@@ -162,7 +161,7 @@ def calculate_file_hash(file_path: str) -> str:
         PermissionError: If unable to read the file due to permissions.
         OSError: If there are issues accessing the file.
     """
-    logger = get_logger('backup_manager.calculate_file_hash')
+    logger = get_logger("backup_manager.calculate_file_hash")
 
     try:
         if not os.path.exists(file_path):
@@ -173,7 +172,7 @@ def calculate_file_hash(file_path: str) -> str:
 
         logger.debug(f"Calculating hash for: {file_path}")
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             file_content = f.read()
             file_hash = hashlib.sha256(file_content).hexdigest()
 
@@ -181,8 +180,7 @@ def calculate_file_hash(file_path: str) -> str:
         return file_hash
 
     except Exception as e:
-        logger.error(f"Error calculating file hash for {file_path}: {e}",
-                     exc_info=True)
+        logger.error(f"Error calculating file hash for {file_path}: {e}", exc_info=True)
         raise
 
 
@@ -199,7 +197,7 @@ def all_hashes_match(existing_hashes: list, new_hash: str) -> bool:
         bool: True if all elements in existing_hashes are equal to new_hash
         and the list is not empty, False otherwise.
     """
-    logger = get_logger('backup_manager.all_hashes_match')
+    logger = get_logger("backup_manager.all_hashes_match")
 
     try:
         if not existing_hashes:
@@ -214,8 +212,7 @@ def all_hashes_match(existing_hashes: list, new_hash: str) -> bool:
             logger.warning("new_hash is not a string")
             return False
 
-        matches = all(existing_hash == new_hash for existing_hash
-                      in existing_hashes)
+        matches = all(existing_hash == new_hash for existing_hash in existing_hashes)
 
         if matches:
             logger.debug(f"All {len(existing_hashes)} existing hashes match")
@@ -227,6 +224,29 @@ def all_hashes_match(existing_hashes: list, new_hash: str) -> bool:
     except Exception as e:
         logger.error(f"Error comparing hashes: {e}", exc_info=True)
         # Return False to err on the side of caution (trigger backup)
+        return False
+
+
+def _copy_backup_to_location(zip_file_path: str, backup_location: str):
+    """Copies the backup file to a single backup location."""
+    logger = get_logger("backup_manager._copy_backup_to_location")
+    backup_file_name = f"{FileDIR.BACKUP_FILE_NAME}.zip"
+    destination_zip_path = os.path.join(backup_location, backup_file_name)
+
+    try:
+        if not os.path.exists(backup_location):
+            os.makedirs(backup_location)
+            logger.info(f"Created backup directory: {backup_location}")
+
+        if os.path.exists(destination_zip_path):
+            os.remove(destination_zip_path)
+            logger.debug(f"Removed existing backup: {destination_zip_path}")
+
+        shutil.copy2(zip_file_path, destination_zip_path)
+        logger.info(f"Backup updated at: {destination_zip_path}")
+        return True
+    except (OSError, PermissionError) as e:
+        logger.error(f"Failed to update backup at {backup_location}: {e}")
         return False
 
 
@@ -247,69 +267,21 @@ def update_all_backups(zip_file_path: str) -> None:
         PermissionError: If unable to write to backup locations.
         OSError: If there are issues creating directories or copying files.
     """
-    logger = get_logger('backup_manager.update_all_backups')
+    logger = get_logger("backup_manager.update_all_backups")
+    if zip_file_path is None:
+        raise ValueError("zip_file_path cannot be None.")
+    if not os.path.exists(zip_file_path):
+        raise FileNotFoundError(f"Source ZIP file not found: {zip_file_path}")
 
-    try:
-        if not os.path.exists(zip_file_path):
-            error_msg = f"Source zip file not found: {zip_file_path}"
-            raise FileNotFoundError(error_msg)
+    success_count = 0
+    for backup_location in FileDIR.BACKUP_LOCATIONS:
+        if _copy_backup_to_location(zip_file_path, backup_location):
+            success_count += 1
 
-        if not os.path.isfile(zip_file_path):
-            raise ValueError(f"Source path is not a file: {zip_file_path}")
-
-        backup_count = len(FileDIR.BACKUP_LOCATIONS)
-        logger.info(f"Updating {backup_count} backup location(s)")
-
-        successful_backups = 0
-        failed_backups = 0
-
-        for backup_location in FileDIR.BACKUP_LOCATIONS:
-            try:
-                backup_file_path = os.path.join(
-                    backup_location,
-                    f"{FileDIR.BACKUP_FILE_NAME}.zip"
-                )
-
-                logger.debug(f"Updating backup at: {backup_location}")
-
-                # Create backup directory if it doesn't exist
-                os.makedirs(backup_location, exist_ok=True)
-
-                # Remove existing backup if it exists
-                if os.path.exists(backup_file_path):
-                    debug_msg = f"Removing existing backup: {backup_file_path}"
-                    logger.debug(debug_msg)
-                    os.remove(backup_file_path)
-
-                # Copy new backup
-                logger.debug(f"Copying backup to: {backup_file_path}")
-                shutil.copy2(zip_file_path, backup_file_path)
-
-                # Verify the copy was successful
-                if os.path.exists(backup_file_path):
-                    successful_backups += 1
-                    logger.debug(f"Successfully updated: {backup_location}")
-                else:
-                    failed_backups += 1
-                    error_msg = f"Copy verification failed: {backup_location}"
-                    logger.error(error_msg)
-
-            except (OSError, PermissionError, shutil.Error) as e:
-                failed_backups += 1
-                error_msg = (f"Failed to update backup at "
-                             f"{backup_location}: {e}")
-                logger.error(error_msg)
-                # Continue with other backup locations
-
-        # Log final results
-        if successful_backups > 0:
-            logger.info(f"Successfully updated {successful_backups} backup(s)")
-        if failed_backups > 0:
-            logger.warning(f"Failed to update {failed_backups} backup(s)")
-
-        if successful_backups == 0:
-            raise RuntimeError("Failed to update any backup locations")
-
-    except Exception as e:
-        logger.error(f"Error updating backups: {e}", exc_info=True)
-        raise
+    if success_count == len(FileDIR.BACKUP_LOCATIONS):
+        logger.info("All backup locations updated successfully.")
+    else:
+        logger.warning(
+            f"Only {success_count} out of {len(FileDIR.BACKUP_LOCATIONS)} "
+            "backups were updated successfully."
+        )
