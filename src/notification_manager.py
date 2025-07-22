@@ -71,14 +71,15 @@ def _send_windows_notification(title, message):
             $notification.Icon = [System.Drawing.SystemIcons]::Information
             $notification.BalloonTipIcon = `
             [System.Windows.Forms.ToolTipIcon]::Info
-            $notification.BalloonTipText = "{message}"
-            $notification.BalloonTipTitle = "{title}"
+            $notification.BalloonTipText = "{sanitized_message}"
+            $notification.BalloonTipTitle = "{sanitized_title}"
             $notification.Visible = $true
             $notification.ShowBalloonTip(5000)
             Start-Sleep -Seconds 1
             $notification.Dispose()
         }}
         """
+        encoded_command = base64.b64encode(powershell_script.encode('utf-16le')).decode('ascii')
 
         result = subprocess.run(
             [
