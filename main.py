@@ -16,13 +16,22 @@ def populate_temp_hold() -> None:
 
 
 def zip_temp_hold() -> str:
-    zip_file_path = os.path.join(FileDIR.TEMPORARY_HOLD_FILE_PATH, f"{FileDIR.BACKUP_FILE_NAME}.zip")
+    zip_file_path = os.path.join(
+        FileDIR.TEMPORARY_HOLD_FILE_PATH,
+        f"{FileDIR.BACKUP_FILE_NAME}.zip"
+    )
 
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
         for root, dirs, files in os.walk(FileDIR.TEMPORARY_HOLD_FILE_PATH):
             for file in files:
                 file_path = os.path.join(root, file)
-                zipf.write(file_path, os.path.relpath(file_path, FileDIR.TEMPORARY_HOLD_FILE_PATH))
+                zipf.write(
+                    file_path,
+                    os.path.relpath(
+                        file_path,
+                        FileDIR.TEMPORARY_HOLD_FILE_PATH
+                    )
+                )
 
     return zip_file_path
 
@@ -31,7 +40,9 @@ def get_existing_backup_hashes() -> list:
     backup_hashes = []
 
     for backup_location in FileDIR.BACKUP_LOCATIONS:
-        for root, dirs, files in os.walk(backup_location):
+        file_dir = os.path.join(backup_location,
+                                f"{FileDIR.BACKUP_FILE_NAME}.zip")
+        for root, dirs, files in os.walk(file_dir):
             for file in files:
                 if file.endswith(".zip"):
                     file_path = os.path.join(root, file)
@@ -42,6 +53,26 @@ def get_existing_backup_hashes() -> list:
 
 def all_hashes_match(existing_hashes: list, new_hash: int) -> bool:
     return all(existing_hash == new_hash for existing_hash in existing_hashes)
+
+
+def update_all_backups(zip_file_path: str) -> None:
+    for backup_location in FileDIR.BACKUP_LOCATIONS:
+        file_dir = os.path.join(backup_location,
+                                f"{FileDIR.BACKUP_FILE_NAME}.zip")
+        if os.path.exists(file_dir):
+            os.remove(file_dir)
+
+        shutil.copy(zip_file_path, file_dir)
+
+
+def cleanup_temp_files() -> None:
+    for file in os.listdir(FileDIR.TEMPORARY_HOLD_FILE_PATH):
+        file_path = os.path.join(FileDIR.TEMPORARY_HOLD_FILE_PATH, file)
+
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
 
 
 if __name__ == "__main__":
@@ -66,4 +97,6 @@ if __name__ == "__main__":
     existing_backup_hashes = get_existing_backup_hashes()
 
     if not all_hashes_match(existing_backup_hashes, new_backup_hash):
-        pass
+        update_all_backups(zipped_backup)
+
+    cleanup_temp_files()
