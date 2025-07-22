@@ -1,13 +1,11 @@
 class FileLocations:
-    ORIGINAL_FILE_LOCATIONS = [
-        "C:/Users/world/Downloads",
-        "C:/Users/world/OneDrive/Documents"
-    ]
+    # All of the file locations that will be backed up
+    ORIGINAL_FILE_LOCATIONS = ["C:/Users/world/Downloads"]
 
-    BACKUP_LOCATIONS = [
-        "C:/Users",
-        "C:/Users/world"
-    ]
+    # All of the locations where backups will be stored
+    BACKUP_LOCATIONS = ["C:/"]
 
+    # Temporary hold directory for files before zipping
     TEMPORARY_HOLD_FILE_PATH = "C:/temp_hold"
+    # Name of the zip file created for backup
     BACKUP_FILE_NAME = "backup"
