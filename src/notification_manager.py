@@ -6,7 +6,6 @@ Handles sending native notifications on Windows, macOS, and Linux systems.
 import subprocess
 import platform
 import shutil
-import base64
 from constants import FileLocations
 from logging_config import get_logger
 
@@ -61,14 +60,10 @@ def _send_windows_notification(title, message):
     try:
         logger.debug("Attempting to send Windows notification...")
 
-        # Sanitize inputs to prevent PowerShell command injection
-        sanitized_title = title.replace("'", "''").replace('"', '""')
-        sanitized_message = message.replace("'", "''").replace('"', '""')
-
         powershell_command = f"""
         if (Get-Module -ListAvailable -Name BurntToast) {{
             Import-Module BurntToast
-            New-BurntToastNotification -Text "{sanitized_title}", "{sanitized_message}" -Silent
+            New-BurntToastNotification -Text "{title}", "{message}" -Silent
         }} else {{
             # Fallback to system tray balloon (older but more reliable)
             Add-Type -AssemblyName System.Windows.Forms
@@ -76,17 +71,14 @@ def _send_windows_notification(title, message):
             $notification.Icon = [System.Drawing.SystemIcons]::Information
             $notification.BalloonTipIcon = `
             [System.Windows.Forms.ToolTipIcon]::Info
-            $notification.BalloonTipText = "{sanitized_message}"
-            $notification.BalloonTipTitle = "{sanitized_title}"
+            $notification.BalloonTipText = "{message}"
+            $notification.BalloonTipTitle = "{title}"
             $notification.Visible = $true
             $notification.ShowBalloonTip(5000)
             Start-Sleep -Seconds 1
             $notification.Dispose()
         }}
         """
-        encoded_command = base64.b64encode(
-            powershell_command.encode("utf-16le")
-        ).decode("ascii")
 
         result = subprocess.run(
             [
@@ -94,8 +86,8 @@ def _send_windows_notification(title, message):
                 "-NoProfile",
                 "-ExecutionPolicy",
                 "Bypass",
-                "-EncodedCommand",
-                encoded_command,
+                "-Command",
+                powershell_command,
             ],
             capture_output=True,
             text=True,
