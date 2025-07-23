@@ -1,463 +1,595 @@
 # File Backup System
 
-A Python-based automated backup solution that creates ZIP archives of specified directories and maintains multiple backup copies across different locations. The system uses hash comparison to detect changes and only updates backups when necessary.
+A robust, cross-platform file backup solution with intelligent change detection, comprehensive logging, and native system notifications. This modular system creates ZIP archives of your important files and maintains them across multiple backup locations automatically.
 
-## Features
+## 🚀2. **Create service file** (`/etc/systemd/system/filebackup.service`):
+   ```ini
+   [Unit]
+   Description=File Backup System
+   After=network.target
 
-- **Automated File Backup**: Recursively backs up specified directories
-- **Hash-Based Change Detection**: Only updates backups when file contents change
-- **Multiple Backup Locations**: Maintains copies across multiple storage locations
+   [Service]
+   Type=simple
+   User=yourusername
+   WorkingDirectory=/path/to/File-Backup-System
+   ExecStart=/usr/bin/python3 /path/to/File-Backup-System/src/main.py
+   Restart=no
+   StandardOutput=journal
+   StandardError=journal
+
+   [Install]
+   WantedBy=multi-user.target
+   ```mart Backup Detection**: Uses SHA-256 hashing to detect file changes and only creates new backups when necessary
 - **Cross-Platform Support**: Works on Windows, macOS, and Linux
-- **Native Notifications**: Sends system notifications on all supported platforms
-- **Windows Integration**: Includes batch file for easy execution with admin privileges
-- **Smart Filtering**: Excludes system files like `.git` and `__pycache__` directories
-- **Temporary File Management**: Uses temporary directories for safe processing
+- **Multiple Backup Locations**: Automatically maintains backups across multiple specified locations
+- **Comprehensive Logging**: Advanced logging with rotating log files, console output, and detailed operation tracking
+- **Native Notifications**: Desktop notifications on all supported platforms with fallback mechanisms
+- **Recursive File Processing**: Handles complex directory structures with intelligent filtering
+- **Error Recovery**: Robust error handling with automatic cleanup and graceful failure management
+- **Temporary File Management**: Secure temporary directory handling with proper cleanup
+- **Modular Architecture**: Clean separation of concerns with dedicated modules for each function
+- **Administrative Privileges**: Optional elevated permissions for accessing protected files
 
-## System Requirements
-
-- **Operating System**: 
-  - Windows (with PowerShell support)
-  - macOS (with osascript support)
-  - Linux (with notify-send, zenity, or kdialog)
-- **Python**: Python 3.6 or higher
-- **Permissions**: Administrator/sudo privileges (for accessing system directories)
-- **Dependencies**: No external Python packages required (uses only standard library)
-
-### Platform-Specific Notification Requirements
-
-#### Windows
-- **Default**: Uses PowerShell for system tray notifications
-- **Enhanced**: Install BurntToast module for better toast notifications:
-  ```powershell
-  Install-Module -Name BurntToast
-  ```
-
-#### macOS
-- **Default**: Uses osascript (AppleScript) for native notifications
-- **Requirements**: No additional setup needed
-
-#### Linux
-- **Ubuntu/Debian**: Install libnotify for notify-send:
-  ```bash
-  sudo apt-get install libnotify-bin
-  ```
-- **CentOS/RHEL**: 
-  ```bash
-  sudo yum install libnotify
-  ```
-- **Alternative**: Works with zenity or kdialog if available
-
-## Installation and Setup
-
-### 1. Download the Project
-```bash
-git clone https://github.com/S0L0GUY/File-Backup-System.git
-cd File-Backup-System
-```
-
-### 2. Configure Backup Settings
-
-Edit the `constants.py` file to customize your backup configuration:
-
-```python
-class FileLocations:
-    # Directories to backup (add your source directories here)
-    ORIGINAL_FILE_LOCATIONS = ["C:/Users/world/Downloads"]
-    
-    # Where to store backup copies (add your backup destinations)
-    BACKUP_LOCATIONS = ["C:/"]
-    
-    # Temporary processing directory
-    TEMPORARY_HOLD_FILE_PATH = "C:/temp_hold"
-    
-    # Name of the backup ZIP file
-    BACKUP_FILE_NAME = "backup"
-```
-
-**Important Configuration Notes:**
-- `ORIGINAL_FILE_LOCATIONS`: List of directories you want to back up
-- `BACKUP_LOCATIONS`: List of directories where backup ZIP files will be stored
-- `TEMPORARY_HOLD_FILE_PATH`: Temporary directory for processing (will be created/cleaned automatically)
-- `BACKUP_FILE_NAME`: Name of the ZIP file (without extension)
-
-### 3. Test the Backup System
-
-Run the system manually to ensure everything works:
-
-```bash
-python main.py
-```
-
-Or use the provided batch file (runs with admin privileges):
-```bash
-run.bat
-```
-
-## Setting Up Automatic Startup on Windows
-
-### Method 1: Windows Task Scheduler (Recommended)
-
-1. **Open Task Scheduler**:
-   - Press `Win + R`, type `taskschd.msc`, and press Enter
-   - Or search for "Task Scheduler" in the Start menu
-
-2. **Create a New Task**:
-   - Click "Create Task..." in the Actions panel
-   - Name: "File Backup System"
-   - Description: "Automated file backup using Python script"
-   - Check "Run with highest privileges"
-   - Check "Run whether user is logged on or not"
-
-3. **Configure Triggers**:
-   - Go to the "Triggers" tab, click "New..."
-   - Begin the task: "At startup" or "At log on"
-   - For daily backups: Select "Daily" and set your preferred time
-   - **For startup + recurring every 30 minutes**: See detailed instructions below
-   - Advanced settings: Check "Enabled"
-
-4. **Configure Actions**:
-   - Go to the "Actions" tab, click "New..."
-   - Action: "Start a program"
-   - Program/script: `C:\path\to\your\File-Backup-System\run.bat`
-   - Start in: `C:\path\to\your\File-Backup-System\`
-
-5. **Configure Conditions** (Optional):
-   - Go to the "Conditions" tab
-   - Uncheck "Start the task only if the computer is on AC power" for laptops
-   - Check "Wake the computer to run this task" if needed
-
-6. **Configure Settings**:
-   - Go to the "Settings" tab
-   - Check "Allow task to be run on demand"
-   - If task fails, restart every: 1 minute, attempt restart up to: 3 times
-
-### Special Configuration: Startup + Every 30 Minutes
-
-To run the backup on startup and then every 30 minutes thereafter, you'll need to create **two triggers** in the same task:
-
-#### Trigger 1: At Startup
-1. In the "Triggers" tab, click "New..."
-2. Begin the task: **"At startup"**
-3. Advanced settings: Check "Enabled"
-4. Click "OK"
-
-#### Trigger 2: Every 30 Minutes (All Day)
-1. Click "New..." again to create a second trigger
-2. Begin the task: **"On a schedule"**
-3. Settings: Select **"Daily"**
-4. Recur every: **1 days**
-5. Start time: Set to a time shortly after typical startup (e.g., 8:00 AM)
-6. Click **"Advanced settings"**
-7. Check **"Repeat task every"** and set to **"30 minutes"**
-8. For duration: Select **"Indefinitely"** or **"24 hours"**
-9. Check "Enabled"
-10. Click "OK"
-
-#### Alternative: PowerShell Script Method
-
-If you prefer more control, create a PowerShell script that handles the scheduling:
-
-1. **Create `backup_scheduler.ps1`**:
-```powershell
-# Run backup immediately on startup
-& "C:\path\to\your\File-Backup-System\run.bat"
-
-# Then run every 30 minutes indefinitely
-while ($true) {
-    Start-Sleep -Seconds 1800  # 30 minutes = 1800 seconds
-    & "C:\path\to\your\File-Backup-System\run.bat"
-}
-```
-
-2. **Create Task Scheduler entry for PowerShell script**:
-   - Program/script: `powershell.exe`
-   - Arguments: `-ExecutionPolicy Bypass -File "C:\path\to\your\backup_scheduler.ps1"`
-   - Trigger: "At startup"
-
-### Method 2: Windows Startup Folder (Simple Startup Only)
-
-**Note**: This method only runs the backup once at startup. For recurring 30-minute intervals, use Task Scheduler instead.
-
-1. **Open Startup Folder**:
-   ```
-   Win + R → shell:startup → Enter
-   ```
-
-2. **Create Shortcut**:
-   - Right-click in the startup folder
-   - New → Shortcut
-   - Location: `C:\path\to\your\File-Backup-System\run.bat`
-   - Name: "File Backup System"
-
-### Method 3: Windows Registry (Advanced Users - Startup Only)
-
-**Note**: This method only runs the backup once at startup. For recurring intervals, use Task Scheduler.
-
-1. **Open Registry Editor**:
-   ```
-   Win + R → regedit → Enter
-   ```
-
-2. **Navigate to**:
-   ```
-   HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
-   ```
-
-3. **Add New String Value**:
-   - Name: `FileBackupSystem`
-   - Value: `C:\path\to\your\File-Backup-System\run.bat`
-
-### Method 4: Create a Custom Windows Service (Advanced)
-
-For the most robust solution that runs on startup and every 30 minutes, you can create a Windows service:
-
-1. **Install Python service wrapper** (if desired):
-```bash
-pip install pywin32
-```
-
-2. **Create `backup_service.py`**:
-```python
-import time
-import subprocess
-import os
-import sys
-
-def run_backup():
-    """Run the backup script"""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    run_bat = os.path.join(script_dir, "run.bat")
-    subprocess.run([run_bat], shell=True)
-
-def main():
-    """Main service loop"""
-    # Run immediately on service start
-    run_backup()
-    
-    # Then run every 30 minutes
-    while True:
-        time.sleep(1800)  # 30 minutes
-        run_backup()
-
-if __name__ == "__main__":
-    main()
-```
-
-3. **Use Task Scheduler to run the service script**:
-   - Create task with trigger "At startup"
-   - Action: Start program `python.exe`
-   - Arguments: `C:\path\to\your\backup_service.py`
-
-## How the Code Works
-
-### Architecture Overview
-
-The system is organized into five main modules:
+## 📁 Project Structure
 
 ```
 File-Backup-System/
-├── main.py                  # Main execution flow
-├── constants.py             # Configuration settings
-├── file_operations.py       # File handling operations
-├── backup_manager.py        # Backup creation and management
-├── notification_manager.py  # Cross-platform notifications
-└── run.bat                 # Windows batch launcher
+├── src/                       # Main source code directory
+│   ├── main.py               # Entry point - simple workflow execution
+│   ├── backup_workflow.py    # Main workflow coordination and error handling
+│   ├── backup_manager.py     # ZIP creation, hash calculation, and backup management
+│   ├── file_operations.py    # File copying, directory traversal, and filtering
+│   ├── temp_manager.py       # Temporary directory creation and cleanup
+│   ├── notification_manager.py # Cross-platform desktop notifications
+│   ├── logging_config.py     # Advanced logging configuration with rotation
+│   └── constants.py          # Configuration constants and file paths
+├── tests/                    # Unit tests and integration tests
+├── scripts/                  # Utility scripts
+│   ├── run.bat              # Windows batch script for easy execution
+│   └── run_tests.py         # Test runner script
+├── logs/                     # Directory for log files (auto-created)
+├── pyproject.toml           # Python project configuration
+├── requirements.txt         # Production dependencies
+└── requirements-dev.txt     # Development dependencies
 ```
 
-### Detailed Code Flow
+## 🛠 How It Works
 
-#### 1. Main Execution (`main.py`)
+### Backup Process Overview
 
-The main function orchestrates the entire backup process:
+1. **Initialization**: Sets up comprehensive logging with rotating files and creates a secure temporary directory
+2. **File Collection**: Recursively copies files from source locations to temporary directory with intelligent filtering
+3. **Archive Creation**: Creates a compressed ZIP file of all collected files with detailed progress tracking
+4. **Change Detection**: Calculates SHA-256 hash and compares with existing backups across all locations
+5. **Backup Update**: Updates all backup locations if changes are detected, with atomic operations
+6. **Cleanup & Notification**: Removes temporary files, logs completion status, and sends desktop notification
 
-```python
-def main():
-    # 1. Create temporary directory
-    create_temp_path()
-    
-    # 2. Copy files to temporary location
-    populate_temp_hold()
-    
-    # 3. Get hashes of existing backups
-    existing_backup_hashes = get_existing_backup_hashes()
-    
-    # 4. Create ZIP of temporary files
-    zipped_backup = zip_temp_hold()
-    
-    # 5. Calculate hash of new backup
-    new_backup_hash = calculate_file_hash(zipped_backup)
-    
-    # 6. Compare hashes and update if needed
-    if not all_hashes_match(existing_backup_hashes, new_backup_hash):
-        update_all_backups(zipped_backup)
-    
-    # 7. Clean up temporary files
-    cleanup_temp_files()
-```
+### Key Components
 
-#### 2. File Operations (`file_operations.py`)
+#### `src/main.py` - Entry Point
+- Simple entry point that delegates to the backup workflow
+- Provides clean exit codes for automated systems
+- Minimal error handling at the top level
 
-Handles all file system operations:
+#### `src/backup_workflow.py` - Workflow Orchestration
+- Orchestrates the entire backup process with comprehensive error handling
+- Provides structured logging with operation context managers
+- Handles graceful shutdown, cleanup, and user interruptions (Ctrl+C)
+- Manages success/failure notifications and final status reporting
+- Uses the `LoggedOperation` context manager for automatic operation logging
 
-- **`create_temp_path()`**: Creates the temporary directory, cleaning up any existing one
-- **`populate_temp_hold()`**: Recursively copies source files to temporary directory
-- **`ignore_patterns()`**: Filters out unwanted files/directories (`.git`, `__pycache__`, etc.)
-- **`cleanup_temp_files()`**: Removes temporary directory and handles Windows permission issues
-- **`handle_remove_readonly()`**: Resolves Windows read-only file deletion issues
+#### `src/backup_manager.py` - Backup Operations
+- Creates ZIP archives using optimal compression with detailed file tracking
+- Calculates and compares SHA-256 file hashes for change detection
+- Manages multiple backup locations with atomic updates
+- Handles backup file versioning and integrity validation
+- Provides detailed statistics on backup operations
 
-#### 3. Backup Management (`backup_manager.py`)
+#### `src/file_operations.py` - File System Operations
+- Recursively copies files while preserving directory structure
+- Implements intelligent filtering (excludes `.git`, `__pycache__`, system files)
+- Handles permission errors and file access issues gracefully
+- Provides detailed progress logging and error recovery
+- Uses efficient file operations with proper error handling
 
-Manages backup creation and verification:
+#### `src/temp_manager.py` - Temporary File Management
+- Creates secure temporary directories with proper permissions
+- Handles cleanup with Windows-specific readonly file handling
+- Manages temporary file lifecycle with automatic cleanup
+- Provides safe directory operations with comprehensive error handling
 
-- **`zip_temp_hold()`**: Creates ZIP archive from temporary directory
-- **`get_existing_backup_hashes()`**: Calculates hashes of existing backup files
-- **`calculate_file_hash()`**: Computes hash of a single file
-- **`all_hashes_match()`**: Compares new backup hash with existing ones
-- **`update_all_backups()`**: Copies new backup to all specified locations
+#### `src/notification_manager.py` - Cross-Platform Notifications
+- Sends native desktop notifications on all platforms with multiple fallback methods
+- Windows: Uses PowerShell with BurntToast or system tray fallback
+- macOS: Uses osascript (AppleScript) for native notifications
+- Linux: Tries notify-send, zenity, or kdialog with graceful degradation
+- Handles platform-specific notification APIs with error recovery
 
-#### 4. Cross-Platform Notifications (`notification_manager.py`)
+#### `src/logging_config.py` - Advanced Logging System
+- Configurable logging with file rotation (10MB files, 5 backups)
+- Timestamped log files with structured formatting and automatic cleanup
+- Console and file output with different log levels and filtering
+- Context managers (`LoggedOperation`) for automatic operation logging
+- Decorator support for function-level logging and error tracking
+- Centralized logger management with module-specific loggers
 
-Provides native notifications across different operating systems:
+## ⚙️ Configuration
 
-- **`send_notification()`**: Main function that detects OS and routes to appropriate handler
-- **`_send_windows_notification()`**: Uses PowerShell with BurntToast or system tray fallback
-- **`_send_macos_notification()`**: Uses osascript (AppleScript) for native macOS notifications
-- **`_send_linux_notification()`**: Tries notify-send, zenity, or kdialog in order
+### Basic Setup
 
-**Platform Detection:**
-- Automatically detects the operating system using `platform.system()`
-- Gracefully falls back to console output if no notification system is available
-- Handles special characters and escaping for each platform
+1. **Configure Source Locations** (`src/constants.py`):
+   ```python
+   class FileLocations:
+       ORIGINAL_FILE_LOCATIONS = [
+           "C:/Users/YourName/Documents",
+           "C:/Users/YourName/Pictures",
+           "/path/to/important/files"
+       ]
+   ```
 
-#### 5. Configuration (`constants.py`)
+2. **Configure Backup Destinations** (`src/constants.py`):
+   ```python
+   class FileLocations:
+       BACKUP_LOCATIONS = [
+           "C:/Backups",
+           "D:/External_Backup"
+       ]
+   ```
 
-Centralizes all configuration in the `FileLocations` class:
-- Source directories to backup
-- Destination directories for backups
-- Temporary processing directory
-- Backup file naming
+3. **Customize Backup Name** (`src/constants.py`):
+   ```python
+   class FileLocations:
+       BACKUP_FILE_NAME = "my_backup"  # Creates "my_backup.zip"
+   ```
 
-#### 6. Windows Launcher (`run.bat`)
+4. **Adjust Timeout Settings** (`src/constants.py`):
+   ```python
+   class FileLocations:
+       DEFAULT_TIMEOUT = 10  # seconds for subprocess operations
+   ```
 
-Provides Windows integration:
-- Checks for administrator privileges
-- Automatically elevates permissions if needed
-- Changes to script directory before execution
-- Launches Python script
+## 🖥️ System Setup Instructions
 
-### Hash-Based Change Detection
+### Windows Setup
 
-The system uses Python's built-in `hash()` function to detect changes:
+#### Prerequisites
+- Python 3.7 or higher
+- Administrative privileges (recommended for accessing all files)
 
-1. **On startup**: Calculate hashes of all existing backup files
-2. **After creating new backup**: Calculate hash of the new ZIP file
-3. **Comparison**: Only update backups if hashes don't match
-4. **Efficiency**: Avoids unnecessary copying when files haven't changed
+#### Method 1: Manual Execution
+1. **Clone or download the repository**
+2. **Configure paths** in `src/constants.py`
+3. **Run directly**:
+   ```cmd
+   python src/main.py
+   ```
+4. **Or use the batch file** (runs with admin privileges):
+   ```cmd
+   scripts/run.bat
+   ```
 
-### Error Handling and Edge Cases
+#### Method 2: Windows Task Scheduler (Recommended)
 
-- **Permission Issues**: Uses `handle_remove_readonly()` for Windows file permissions
-- **Missing Directories**: Checks existence before operations
-- **File Conflicts**: Overwrites existing backups when updates are needed
-- **Admin Rights**: Batch file automatically requests elevation
+##### Basic Setup - Run Once Daily
+1. **Open Task Scheduler** (`Win + R`, type `taskschd.msc`)
+2. **Create Basic Task**:
+   - Name: "File Backup System"
+   - Trigger: Daily at desired time
+   - Action: Start a program
+   - Program: `python.exe`
+   - Arguments: `main.py`
+   - Start in: `C:\path\to\File-Backup-System`
 
-## Usage Examples
+##### Advanced Setup - Startup + Every 30 Minutes
+For continuous backup protection with startup execution and regular intervals:
 
-### Basic Usage
+1. **Create New Task** (not Basic Task):
+   - **General Tab**:
+     - Name: "File Backup System - Continuous"
+     - Check "Run with highest privileges"
+     - Check "Run whether user is logged on or not"
+
+   - **Triggers Tab** - Create TWO triggers:
+     
+     **Trigger 1: At Startup**
+     - Click "New..."
+     - Begin the task: "At startup"
+     - Advanced settings: Check "Enabled"
+     - Click "OK"
+     
+     **Trigger 2: Every 30 Minutes**
+     - Click "New..." again
+     - Begin the task: "On a schedule"
+     - Settings: Select "Daily"
+     - Recur every: 1 days
+     - Start time: Set to a time shortly after typical startup (e.g., 8:00 AM)
+     - Click "Advanced settings"
+     - Check "Repeat task every" and set to "30 minutes"
+     - For duration: Select "Indefinitely"
+     - Check "Enabled"
+     - Click "OK"
+
+   - **Actions Tab**:
+     - Program: `C:\path\to\python.exe`
+     - Arguments: `src/main.py`
+     - Start in: `C:\path\to\File-Backup-System`
+
+   - **Conditions Tab**:
+     - Uncheck "Start the task only if the computer is on AC power" (for laptops)
+     - Check "Wake the computer to run this task" (optional)
+
+   - **Settings Tab**:
+     - Check "Allow task to be run on demand"
+     - Check "If the running task does not end when requested, force it to stop"
+     - "If the task is already running": "Do not start a new instance"
+
+#### Method 3: Windows Service
+For advanced users, consider using `python-windows-service` or `nssm` to run as a Windows service.
+
+### macOS Setup
+
+#### Prerequisites
 ```bash
-# Run backup once
-python main.py
+# Install Python 3 if not already installed
+brew install python3
 
-# Run with admin privileges (Windows)
-run.bat
+# Optional: Install notification enhancements
+# The system uses built-in osascript, no additional packages needed
 ```
 
-### Customization Examples
-
-**Backup multiple directories**:
-```python
-ORIGINAL_FILE_LOCATIONS = [
-    "C:/Users/world/Documents",
-    "C:/Users/world/Desktop", 
-    "C:/Users/world/Pictures"
-]
+#### Method 1: Manual Execution
+```bash
+cd /path/to/File-Backup-System
+python3 src/main.py
 ```
 
-**Multiple backup destinations**:
-```python
-BACKUP_LOCATIONS = [
-    "D:/Backups",
-    "E:/BackupDrive", 
-    "//NetworkDrive/Backups"
-]
+#### Method 2: Launchd (macOS Service)
+1. **Create a launch agent** (`~/Library/LaunchAgents/com.user.filebackup.plist`):
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+             "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+   <plist version="1.0">
+   <dict>
+       <key>Label</key>
+       <string>com.user.filebackup</string>
+       <key>ProgramArguments</key>
+       <array>
+           <string>/usr/local/bin/python3</string>
+           <string>/path/to/File-Backup-System/src/main.py</string>
+       </array>
+       <key>WorkingDirectory</key>
+       <string>/path/to/File-Backup-System</string>
+       <key>StartInterval</key>
+       <integer>1800</integer> <!-- 30 minutes -->
+       <key>RunAtLoad</key>
+       <true/>
+       <key>StandardOutPath</key>
+       <string>/tmp/filebackup.out</string>
+       <key>StandardErrorPath</key>
+       <string>/tmp/filebackup.err</string>
+   </dict>
+   </plist>
+   ```
+
+2. **Load the service**:
+   ```bash
+   launchctl load ~/Library/LaunchAgents/com.user.filebackup.plist
+   launchctl start com.user.filebackup
+   ```
+
+#### Method 3: Cron
+```bash
+# Edit crontab
+crontab -e
+
+# Add entry for every 30 minutes
+*/30 * * * * cd /path/to/File-Backup-System && /usr/local/bin/python3 src/main.py
+
+# Or daily at 2 AM
+0 2 * * * cd /path/to/File-Backup-System && /usr/local/bin/python3 src/main.py
 ```
 
-## Troubleshooting
+### Linux Setup
+
+#### Prerequisites
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install python3 python3-pip libnotify-bin zenity
+
+# CentOS/RHEL/Fedora
+sudo yum install python3 python3-pip libnotify zenity
+# or for newer versions:
+sudo dnf install python3 python3-pip libnotify zenity
+
+# Arch Linux
+sudo pacman -S python python-pip libnotify zenity
+```
+
+#### Method 1: Manual Execution
+```bash
+cd /path/to/File-Backup-System
+python3 src/main.py
+```
+
+#### Method 2: Systemd Service (Recommended)
+1. **Create service file** (`/etc/systemd/system/filebackup.service`):
+   ```ini
+   [Unit]
+   Description=File Backup System
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=yourusername
+   WorkingDirectory=/path/to/File-Backup-System
+   ExecStart=/usr/bin/python3 /path/to/File-Backup-System/main.py
+   Restart=no
+   StandardOutput=journal
+   StandardError=journal
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+2. **Create timer for regular execution** (`/etc/systemd/system/filebackup.timer`):
+   ```ini
+   [Unit]
+   Description=Run File Backup System every 30 minutes
+   Requires=filebackup.service
+
+   [Timer]
+   OnBootSec=5min
+   OnUnitActiveSec=30min
+   Unit=filebackup.service
+
+   [Install]
+   WantedBy=timers.target
+   ```
+
+3. **Enable and start**:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable filebackup.timer
+   sudo systemctl start filebackup.timer
+   
+   # Check status
+   sudo systemctl status filebackup.timer
+   sudo systemctl status filebackup.service
+   ```
+
+#### Method 3: Cron
+```bash
+# Edit crontab
+crontab -e
+
+# Every 30 minutes
+*/30 * * * * cd /path/to/File-Backup-System && /usr/bin/python3 src/main.py
+
+# Daily at 3 AM
+0 3 * * * cd /path/to/File-Backup-System && /usr/bin/python3 src/main.py
+```
+
+## 🧪 Testing
+
+### Running Tests
+
+The project includes comprehensive unit tests and integration tests:
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run tests with coverage
+python -m pytest tests/ --cov=src
+
+# Run specific test file
+python -m pytest tests/test_backup_manager.py
+
+# Use the test runner script
+python scripts/run_tests.py
+```
+
+### Test Structure
+- `tests/test_backup_manager.py` - Tests for backup operations
+- `tests/test_constants.py` - Configuration validation tests
+- `tests/test_integration.py` - End-to-end integration tests
+- `tests/test_logging_config.py` - Logging system tests
+- `tests/test_temp_manager.py` - Temporary file management tests
+
+## 📊 Monitoring and Logs
+
+### Log Files
+- **Location**: `logs/` directory
+- **Format**: `backup_system_YYYYMMDD_HHMMSS.log`
+- **Rotation**: 10MB per file, keeps 5 backup files
+- **Content**: Detailed operation logs, error messages, and performance metrics
+
+### Log Levels
+- **INFO**: Normal operation progress
+- **DEBUG**: Detailed operation information
+- **WARNING**: Non-critical issues
+- **ERROR**: Operation failures and exceptions
+
+### Sample Log Output
+```
+2025-07-22 14:21:12 - backup_system - INFO - ==================================================
+2025-07-22 14:21:12 - backup_system - INFO - Starting File Backup System
+2025-07-22 14:21:12 - backup_system - INFO - ==================================================
+2025-07-22 14:21:12 - backup_system - INFO - Starting temporary directory creation...
+2025-07-22 14:21:12 - backup_system - INFO - Successfully completed temporary directory creation
+2025-07-22 14:21:12 - backup_system - INFO - Starting file population to temporary directory...
+2025-07-22 14:21:15 - backup_system - INFO - Copy operation completed: 1 successful, 0 failed. Copied 42 files and 1 directories.
+2025-07-22 14:21:15 - backup_system - INFO - Successfully completed file population to temporary directory
+2025-07-22 14:21:15 - backup_system - INFO - Starting retrieving existing backup hashes...
+2025-07-22 14:21:15 - backup_system - INFO - Found 2 existing backup(s)
+2025-07-22 14:21:15 - backup_system - INFO - Successfully completed retrieving existing backup hashes
+2025-07-22 14:21:15 - backup_system - INFO - Starting creating ZIP backup...
+2025-07-22 14:21:16 - backup_system - INFO - ZIP archive created: 42 files, 15728640 bytes
+2025-07-22 14:21:16 - backup_system - INFO - Successfully completed creating ZIP backup
+```
+
+## 🚨 Troubleshooting
 
 ### Common Issues
 
-1. **Permission Denied Errors**:
-   - Run as Administrator
-   - Use the provided `run.bat` file
-   - Check file/directory permissions
+#### Permission Errors
+- **Windows**: Run as administrator or use `run.bat`
+- **macOS/Linux**: Ensure user has read access to source directories and write access to backup locations
 
-2. **Python Not Found**:
-   - Ensure Python is installed and in PATH
-   - Use full path to Python executable in batch file
+#### Python Not Found
+- **Windows**: Add Python to PATH or specify full path in scripts
+- **macOS**: Use `python3` instead of `python`
+- **Linux**: Install Python 3 using package manager
 
-3. **Backup Not Updating**:
-   - Check if source files actually changed
-   - Verify backup locations are writable
-   - Check disk space
+#### Notification Issues
+- **Windows**: Install BurntToast module: `pip install BurntToast`
+- **Linux**: Install notification tools: `sudo apt install libnotify-bin zenity`
+- **macOS**: Notifications work out of the box with osascript
 
-4. **Task Scheduler Not Working**:
-   - Verify task runs with highest privileges
-   - Check "Run whether user is logged on or not"
-   - Test the batch file manually first
+#### Large File Handling
+- Monitor disk space in temporary directory location
+- Adjust `DEFAULT_TIMEOUT` in `src/constants.py` for large files
+- Consider excluding large, non-essential files in `ignore_patterns()` function
+- Monitor temporary directory cleanup in logs for potential issues
 
-5. **30-Minute Recurring Backups Not Working**:
-   - Ensure both triggers are properly configured in Task Scheduler
-   - Check that "Repeat task every 30 minutes" is set with "Indefinitely" duration
-   - Verify the task isn't being blocked by power settings
-   - Check Windows Event Viewer for task execution logs
+#### Network Backup Locations
+- Ensure network paths are accessible and mounted
+- Use UNC paths on Windows: `\\server\share\path`
+- Consider authentication for network drives
 
-6. **High System Resource Usage**:
-   - Consider increasing the interval if 30 minutes is too frequent
-   - Monitor disk I/O during backup operations
-   - Exclude unnecessary large directories from backup
+### Performance Optimization
 
-### Logs and Debugging
+#### For Large Datasets
+1. **Increase timeout values** in `src/constants.py`
+2. **Use SSD storage** for temporary directory
+3. **Schedule during off-peak hours**
+4. **Exclude unnecessary file types** in `ignore_patterns()` function in `src/file_operations.py`
 
-The system provides console output for each step:
+#### Memory Usage
+- The system processes files incrementally
+- Memory usage scales with temporary directory size
+- Monitor system resources during large backups
+
+## 🔒 Security Considerations
+
+### File Permissions
+- Temporary directories are created with secure permissions
+- Backup files inherit destination directory permissions
+- Consider encrypting backup locations for sensitive data
+
+### Network Security
+- Use secure network protocols for remote backup locations
+- Consider VPN for internet-based backup destinations
+- Implement proper authentication for network shares
+
+### Data Privacy
+- Log files may contain file paths and system information
+- Configure log retention policies based on privacy requirements using the rotating file handler settings
+- Consider log file encryption for sensitive environments
+- Review log levels to control information verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
+- Temporary directories are automatically cleaned up to prevent data leakage
+
+## �️ Development
+
+### Project Dependencies
+
+The project uses modern Python development practices:
+
+- **Production Dependencies**: Listed in `requirements.txt` (currently uses only standard library)
+- **Development Dependencies**: Listed in `requirements-dev.txt` (testing frameworks, linting tools)
+- **Project Configuration**: `pyproject.toml` with Black, pytest, and mypy configurations
+
+### Code Quality Tools
+
+- **Black**: Code formatting with 88-character line length
+- **pytest**: Testing framework with comprehensive test coverage
+- **mypy**: Type checking for better code reliability
+- **Bandit**: Security analysis (configuration in `bandit.yaml`)
+
+### Development Setup
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run code formatting
+black src/ tests/
+
+# Run type checking
+mypy src/
+
+# Run security analysis
+bandit -c bandit.yaml -r src/
+
+# Run all tests with coverage
+python -m pytest tests/ --cov=src
 ```
-Creating temporary file directory...
-Populating temporary hold with files...
-Retrieving existing backup hashes...
-Zipping temporary hold files...
-Calculating new backup hash...
-Checking if existing backups match the new backup hash...
-```
 
-**To monitor scheduled backups**:
-- Check Windows Event Viewer: `Windows Logs > Application`
-- Look for Task Scheduler entries related to your backup task
-- Enable task history in Task Scheduler for detailed execution logs
+## �🔄 Maintenance
 
-## Security Considerations
+### Regular Tasks
+1. **Monitor log files** in the `logs/` directory for errors and warnings
+2. **Check backup integrity** by verifying ZIP files can be opened and extracted
+3. **Review disk space** in backup locations and temporary directory
+4. **Update source/destination paths** in `src/constants.py` as needed
+5. **Test restore procedures** regularly by extracting backup files
+6. **Review ignored file patterns** in `src/file_operations.py` based on new file types
 
-- **Admin Privileges**: Required for accessing system directories
-- **File Permissions**: Handles Windows read-only files appropriately
-- **Temporary Files**: Automatically cleaned up after each run
-- **Network Paths**: Supported for network backup locations
+### Updates and Upgrades
+- Keep Python installation updated to latest stable version
+- Review and update ignore patterns for new system files or build artifacts
+- Adjust logging levels and rotation settings based on usage patterns
+- Monitor system performance impact and adjust timing intervals accordingly
+- Update notification settings based on changes in operating system APIs
 
-## Contributing
+## 🏗️ Architecture Highlights
+
+### Modular Design
+The system is built with a clean separation of concerns:
+- **`main.py`**: Simple entry point with minimal logic
+- **`backup_workflow.py`**: Orchestrates the entire process with comprehensive error handling
+- **Specialized modules**: Each handles a specific aspect (files, backups, notifications, logging, temp management)
+- **Configuration centralization**: All settings in `constants.py` for easy management
+
+### Advanced Error Handling
+- **Graceful degradation**: System continues operating when non-critical components fail
+- **Comprehensive logging**: All operations logged with context and error details
+- **Automatic cleanup**: Temporary files cleaned up even when operations fail
+- **User interruption handling**: Clean shutdown on Ctrl+C with proper cleanup
+- **Notification fallbacks**: Multiple notification methods with graceful fallback to console output
+
+### Logging Architecture
+- **Rotating logs**: Automatic log rotation (10MB files, 5 backups) prevents disk space issues
+- **Structured logging**: Consistent formatting with timestamps and operation context
+- **Module-specific loggers**: Detailed tracking of which component generated each log entry
+- **Operation context managers**: Automatic start/success/failure logging for major operations
+- **Debug support**: Detailed debug logging for troubleshooting without overwhelming normal logs
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Test thoroughly on Windows
+3. Make your changes with appropriate tests
+4. Update documentation as needed
 5. Submit a pull request
 
-## License
+## 📞 Support
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+For issues and questions:
+1. Check the troubleshooting section above
+2. Review log files for detailed error information
+3. Create an issue in the repository with:
+   - Operating system and version
+   - Python version
+   - Complete error messages
+   - Relevant log file excerpts
+
+---
+
+**Note**: This backup system is designed for personal use. For enterprise environments, consider additional features like encryption, incremental backups, and centralized management.

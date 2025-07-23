@@ -1,0 +1,8 @@
+# Core dependencies (using standard library modules)
+# No external dependencies required for the main application
+
+# Development and testing dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+flake8>=6.0.0
+black>=23.0.0
