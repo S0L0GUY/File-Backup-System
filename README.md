@@ -1,6 +1,5 @@
 # File Backup System
 
-# File Backup System
 
 A robust, cross-platform file backup solution with intelligent change detection, comprehensive logging, and native system notifications. This modular system creates ZIP archives of your important files and maintains them across multiple backup locations automatically.
 
