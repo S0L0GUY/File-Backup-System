@@ -169,19 +169,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Note**: This backup system is designed for personal use. For enterprise environments, consider additional features like encryption and incremental backups.
 
-## ✨ Features
-
-- **Smart Backup Detection**: Uses SHA-256 hashing to detect file changes and only creates new backups when necessary
-- **Cross-Platform Support**: Works on Windows, macOS, and Linux
-- **Multiple Backup Locations**: Automatically maintains backups across multiple specified locations
-- **Comprehensive Logging**: Advanced logging with rotating log files, console output, and detailed operation tracking
-- **Native Notifications**: Desktop notifications on all supported platforms with fallback mechanisms
-- **Recursive File Processing**: Handles complex directory structures with intelligent filtering
-- **Error Recovery**: Robust error handling with automatic cleanup and graceful failure management
-- **Temporary File Management**: Secure temporary directory handling with proper cleanup
-- **Modular Architecture**: Clean separation of concerns with dedicated modules for each function
-- **Administrative Privileges**: Optional elevated permissions for accessing protected files
-
 ## 📁 Project Structure
 
 ```
