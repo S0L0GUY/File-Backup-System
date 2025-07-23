@@ -1,8 +1,79 @@
 # File Backup System
 
+# File Backup System
+
 A robust, cross-platform file backup solution with intelligent change detection, comprehensive logging, and native system notifications. This modular system creates ZIP archives of your important files and maintains them across multiple backup locations automatically.
 
-## 🚀2. **Create service file** (`/etc/systemd/system/filebackup.service`):
+## ✨ Features
+
+- **Smart Backup Detection**: Uses SHA-256 hashing to detect file changes and only creates new backups when necessary
+- **Cross-Platform Support**: Works on Windows, macOS, and Linux
+- **Multiple Backup Locations**: Automatically maintains backups across multiple specified locations
+- **Comprehensive Logging**: Advanced logging with rotating log files and detailed operation tracking
+- **Native Notifications**: Desktop notifications on all supported platforms with fallback mechanisms
+- **Error Recovery**: Robust error handling with automatic cleanup and graceful failure management
+- **Modular Architecture**: Clean separation of concerns with dedicated modules for each function
+
+## 📁 Project Structure
+
+```
+File-Backup-System/
+├── src/                       # Main source code directory
+│   ├── main.py               # Entry point
+│   ├── backup_workflow.py    # Main workflow coordination
+│   ├── backup_manager.py     # ZIP creation and backup management
+│   ├── file_operations.py    # File operations and filtering
+│   ├── temp_manager.py       # Temporary directory management
+│   ├── notification_manager.py # Cross-platform notifications
+│   ├── logging_config.py     # Logging configuration
+│   └── constants.py          # Configuration constants
+├── tests/                    # Unit tests and integration tests
+├── scripts/                  # Utility scripts
+├── logs/                     # Log files (auto-created)
+├── pyproject.toml           # Python project configuration
+└── requirements.txt         # Dependencies
+```
+
+## 🚀 Quick Start
+
+1. **Clone the repository**
+2. **Configure paths in `src/constants.py`**:
+   ```python
+   class FileLocations:
+       ORIGINAL_FILE_LOCATIONS = [
+           "C:/Users/YourName/Documents",
+           "C:/Users/YourName/Pictures"
+       ]
+       BACKUP_LOCATIONS = [
+           "C:/Backups",
+           "D:/External_Backup"
+       ]
+   ```
+3. **Run the backup**:
+   ```bash
+   python src/main.py
+   ```
+
+## 🖥️ Platform Setup
+
+### Windows
+- **Manual**: `python src/main.py` or use `scripts/run.bat`
+- **Scheduled**: Use Task Scheduler for automatic backups
+- **Prerequisites**: Python 3.7+, optional admin privileges
+
+### macOS
+- **Manual**: `python3 src/main.py`
+- **Scheduled**: Use Launchd or cron
+- **Prerequisites**: Python 3, built-in notification support
+
+### Linux
+- **Manual**: `python3 src/main.py`
+- **Scheduled**: Use systemd or cron
+- **Prerequisites**: Python 3, `libnotify-bin`, `zenity`
+
+### Linux Systemd Service
+
+1. **Create service file** (`/etc/systemd/system/filebackup.service`):
    ```ini
    [Unit]
    Description=File Backup System
@@ -14,12 +85,94 @@ A robust, cross-platform file backup solution with intelligent change detection,
    WorkingDirectory=/path/to/File-Backup-System
    ExecStart=/usr/bin/python3 /path/to/File-Backup-System/src/main.py
    Restart=no
-   StandardOutput=journal
-   StandardError=journal
 
    [Install]
    WantedBy=multi-user.target
-   ```mart Backup Detection**: Uses SHA-256 hashing to detect file changes and only creates new backups when necessary
+   ```
+
+2. **Create timer** (`/etc/systemd/system/filebackup.timer`):
+   ```ini
+   [Unit]
+   Description=Run File Backup System every 30 minutes
+
+   [Timer]
+   OnBootSec=5min
+   OnUnitActiveSec=30min
+
+   [Install]
+   WantedBy=timers.target
+   ```
+
+3. **Enable and start**:
+   ```bash
+   sudo systemctl enable filebackup.timer
+   sudo systemctl start filebackup.timer
+   ```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run with coverage
+python -m pytest tests/ --cov=src
+```
+
+## 📊 Monitoring
+
+- **Log Location**: `logs/` directory
+- **Log Format**: `backup_system_YYYYMMDD_HHMMSS.log`
+- **Log Rotation**: 10MB files, keeps 5 backups
+- **Log Levels**: INFO, DEBUG, WARNING, ERROR
+
+## 🚨 Troubleshooting
+
+### Common Issues
+- **Permission Errors**: Run as administrator (Windows) or check file permissions
+- **Python Not Found**: Add Python to PATH or use full path
+- **Notification Issues**: Install platform-specific notification tools
+
+### Performance Tips
+- Increase timeout values in `src/constants.py` for large files
+- Use SSD storage for temporary directory
+- Schedule during off-peak hours
+- Exclude unnecessary files in `ignore_patterns()` function
+
+## 🔧 Development
+
+```bash
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Code formatting
+black src/ tests/
+
+# Type checking
+mypy src/
+
+# Security analysis
+bandit -c bandit.yaml -r src/
+```
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new features
+4. Submit a pull request
+
+---
+
+**Note**: This backup system is designed for personal use. For enterprise environments, consider additional features like encryption and incremental backups.
+
+## ✨ Features
+
+- **Smart Backup Detection**: Uses SHA-256 hashing to detect file changes and only creates new backups when necessary
 - **Cross-Platform Support**: Works on Windows, macOS, and Linux
 - **Multiple Backup Locations**: Automatically maintains backups across multiple specified locations
 - **Comprehensive Logging**: Advanced logging with rotating log files, console output, and detailed operation tracking
