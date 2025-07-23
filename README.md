@@ -1,106 +1,151 @@
 # File Backup System
 
-A robust, cross-platform file backup solution with intelligent change detection, comprehensive logging, and native system notifications. This system creates ZIP archives of your important files and maintains them across multiple backup locations automatically.
+A robust, cross-platform file backup solution with intelligent change detection, comprehensive logging, and native system notifications. This modular system creates ZIP archives of your important files and maintains them across multiple backup locations automatically.
 
-## 🚀 Features
+## 🚀2. **Create service file** (`/etc/systemd/system/filebackup.service`):
+   ```ini
+   [Unit]
+   Description=File Backup System
+   After=network.target
 
-- **Smart Backup Detection**: Uses SHA-256 hashing to detect file changes and only creates new backups when necessary
+   [Service]
+   Type=simple
+   User=yourusername
+   WorkingDirectory=/path/to/File-Backup-System
+   ExecStart=/usr/bin/python3 /path/to/File-Backup-System/src/main.py
+   Restart=no
+   StandardOutput=journal
+   StandardError=journal
+
+   [Install]
+   WantedBy=multi-user.target
+   ```mart Backup Detection**: Uses SHA-256 hashing to detect file changes and only creates new backups when necessary
 - **Cross-Platform Support**: Works on Windows, macOS, and Linux
 - **Multiple Backup Locations**: Automatically maintains backups across multiple specified locations
-- **Comprehensive Logging**: Detailed logging with rotating log files and console output
-- **Native Notifications**: Desktop notifications on all supported platforms
+- **Comprehensive Logging**: Advanced logging with rotating log files, console output, and detailed operation tracking
+- **Native Notifications**: Desktop notifications on all supported platforms with fallback mechanisms
 - **Recursive File Processing**: Handles complex directory structures with intelligent filtering
-- **Error Recovery**: Robust error handling with automatic cleanup
+- **Error Recovery**: Robust error handling with automatic cleanup and graceful failure management
 - **Temporary File Management**: Secure temporary directory handling with proper cleanup
+- **Modular Architecture**: Clean separation of concerns with dedicated modules for each function
 - **Administrative Privileges**: Optional elevated permissions for accessing protected files
 
 ## 📁 Project Structure
 
 ```
 File-Backup-System/
-├── main.py                    # Entry point - orchestrates the backup process
-├── backup_workflow.py         # Main workflow coordination and error handling
-├── backup_manager.py          # ZIP creation, hash calculation, and backup management
-├── file_operations.py         # File copying, directory traversal, and filtering
-├── temp_manager.py           # Temporary directory creation and cleanup
-├── notification_manager.py    # Cross-platform desktop notifications
-├── logging_config.py         # Centralized logging configuration
-├── constants.py              # Configuration constants and file paths
-├── run.bat                   # Windows batch script for easy execution
-└── logs/                     # Directory for log files (auto-created)
+├── src/                       # Main source code directory
+│   ├── main.py               # Entry point - simple workflow execution
+│   ├── backup_workflow.py    # Main workflow coordination and error handling
+│   ├── backup_manager.py     # ZIP creation, hash calculation, and backup management
+│   ├── file_operations.py    # File copying, directory traversal, and filtering
+│   ├── temp_manager.py       # Temporary directory creation and cleanup
+│   ├── notification_manager.py # Cross-platform desktop notifications
+│   ├── logging_config.py     # Advanced logging configuration with rotation
+│   └── constants.py          # Configuration constants and file paths
+├── tests/                    # Unit tests and integration tests
+├── scripts/                  # Utility scripts
+│   ├── run.bat              # Windows batch script for easy execution
+│   └── run_tests.py         # Test runner script
+├── logs/                     # Directory for log files (auto-created)
+├── pyproject.toml           # Python project configuration
+├── requirements.txt         # Production dependencies
+└── requirements-dev.txt     # Development dependencies
 ```
 
 ## 🛠 How It Works
 
 ### Backup Process Overview
 
-1. **Initialization**: Sets up logging and creates a secure temporary directory
-2. **File Collection**: Recursively copies files from source locations to temporary directory
-3. **Archive Creation**: Creates a compressed ZIP file of all collected files
-4. **Change Detection**: Calculates SHA-256 hash and compares with existing backups
-5. **Backup Update**: Updates all backup locations if changes are detected
-6. **Cleanup**: Removes temporary files and sends completion notification
+1. **Initialization**: Sets up comprehensive logging with rotating files and creates a secure temporary directory
+2. **File Collection**: Recursively copies files from source locations to temporary directory with intelligent filtering
+3. **Archive Creation**: Creates a compressed ZIP file of all collected files with detailed progress tracking
+4. **Change Detection**: Calculates SHA-256 hash and compares with existing backups across all locations
+5. **Backup Update**: Updates all backup locations if changes are detected, with atomic operations
+6. **Cleanup & Notification**: Removes temporary files, logs completion status, and sends desktop notification
 
 ### Key Components
 
-#### `backup_workflow.py`
-- Orchestrates the entire backup process
-- Provides comprehensive error handling and recovery
-- Manages logging operations and user notifications
-- Handles graceful shutdown and cleanup
+#### `src/main.py` - Entry Point
+- Simple entry point that delegates to the backup workflow
+- Provides clean exit codes for automated systems
+- Minimal error handling at the top level
 
-#### `backup_manager.py`
-- Creates ZIP archives using optimal compression
-- Calculates and compares SHA-256 file hashes
-- Manages multiple backup locations
-- Handles backup file versioning and updates
+#### `src/backup_workflow.py` - Workflow Orchestration
+- Orchestrates the entire backup process with comprehensive error handling
+- Provides structured logging with operation context managers
+- Handles graceful shutdown, cleanup, and user interruptions (Ctrl+C)
+- Manages success/failure notifications and final status reporting
+- Uses the `LoggedOperation` context manager for automatic operation logging
 
-#### `file_operations.py`
+#### `src/backup_manager.py` - Backup Operations
+- Creates ZIP archives using optimal compression with detailed file tracking
+- Calculates and compares SHA-256 file hashes for change detection
+- Manages multiple backup locations with atomic updates
+- Handles backup file versioning and integrity validation
+- Provides detailed statistics on backup operations
+
+#### `src/file_operations.py` - File System Operations
 - Recursively copies files while preserving directory structure
-- Implements intelligent filtering (excludes .git, __pycache__, etc.)
-- Handles permission errors and file access issues
-- Provides detailed progress logging
+- Implements intelligent filtering (excludes `.git`, `__pycache__`, system files)
+- Handles permission errors and file access issues gracefully
+- Provides detailed progress logging and error recovery
+- Uses efficient file operations with proper error handling
 
-#### `temp_manager.py`
+#### `src/temp_manager.py` - Temporary File Management
 - Creates secure temporary directories with proper permissions
 - Handles cleanup with Windows-specific readonly file handling
-- Manages temporary file lifecycle
+- Manages temporary file lifecycle with automatic cleanup
+- Provides safe directory operations with comprehensive error handling
 
-#### `notification_manager.py`
-- Sends native desktop notifications on all platforms
-- Provides multiple fallback notification methods
-- Handles platform-specific notification APIs
+#### `src/notification_manager.py` - Cross-Platform Notifications
+- Sends native desktop notifications on all platforms with multiple fallback methods
+- Windows: Uses PowerShell with BurntToast or system tray fallback
+- macOS: Uses osascript (AppleScript) for native notifications
+- Linux: Tries notify-send, zenity, or kdialog with graceful degradation
+- Handles platform-specific notification APIs with error recovery
 
-#### `logging_config.py`
+#### `src/logging_config.py` - Advanced Logging System
 - Configurable logging with file rotation (10MB files, 5 backups)
-- Timestamped log files with structured formatting
-- Console and file output with different log levels
-- Context managers for operation logging
+- Timestamped log files with structured formatting and automatic cleanup
+- Console and file output with different log levels and filtering
+- Context managers (`LoggedOperation`) for automatic operation logging
+- Decorator support for function-level logging and error tracking
+- Centralized logger management with module-specific loggers
 
 ## ⚙️ Configuration
 
 ### Basic Setup
 
-1. **Configure Source Locations** (`constants.py`):
+1. **Configure Source Locations** (`src/constants.py`):
    ```python
-   ORIGINAL_FILE_LOCATIONS = [
-       "C:/Users/YourName/Documents",
-       "C:/Users/YourName/Pictures",
-       "/path/to/important/files"
-   ]
+   class FileLocations:
+       ORIGINAL_FILE_LOCATIONS = [
+           "C:/Users/YourName/Documents",
+           "C:/Users/YourName/Pictures",
+           "/path/to/important/files"
+       ]
    ```
 
-2. **Configure Backup Destinations** (`constants.py`):
+2. **Configure Backup Destinations** (`src/constants.py`):
    ```python
-   BACKUP_LOCATIONS = [
-       "C:/Backups",
-       "D:/External_Backup"
-   ]
+   class FileLocations:
+       BACKUP_LOCATIONS = [
+           "C:/Backups",
+           "D:/External_Backup"
+       ]
    ```
 
-3. **Customize Backup Name** (`constants.py`):
+3. **Customize Backup Name** (`src/constants.py`):
    ```python
-   BACKUP_FILE_NAME = "my_backup"  # Creates "my_backup.zip"
+   class FileLocations:
+       BACKUP_FILE_NAME = "my_backup"  # Creates "my_backup.zip"
+   ```
+
+4. **Adjust Timeout Settings** (`src/constants.py`):
+   ```python
+   class FileLocations:
+       DEFAULT_TIMEOUT = 10  # seconds for subprocess operations
    ```
 
 ## 🖥️ System Setup Instructions
@@ -113,14 +158,14 @@ File-Backup-System/
 
 #### Method 1: Manual Execution
 1. **Clone or download the repository**
-2. **Configure paths** in `constants.py`
+2. **Configure paths** in `src/constants.py`
 3. **Run directly**:
    ```cmd
-   python main.py
+   python src/main.py
    ```
 4. **Or use the batch file** (runs with admin privileges):
    ```cmd
-   run.bat
+   scripts/run.bat
    ```
 
 #### Method 2: Windows Task Scheduler (Recommended)
@@ -166,7 +211,7 @@ For continuous backup protection with startup execution and regular intervals:
 
    - **Actions Tab**:
      - Program: `C:\path\to\python.exe`
-     - Arguments: `main.py`
+     - Arguments: `src/main.py`
      - Start in: `C:\path\to\File-Backup-System`
 
    - **Conditions Tab**:
@@ -195,7 +240,7 @@ brew install python3
 #### Method 1: Manual Execution
 ```bash
 cd /path/to/File-Backup-System
-python3 main.py
+python3 src/main.py
 ```
 
 #### Method 2: Launchd (macOS Service)
@@ -211,7 +256,7 @@ python3 main.py
        <key>ProgramArguments</key>
        <array>
            <string>/usr/local/bin/python3</string>
-           <string>/path/to/File-Backup-System/main.py</string>
+           <string>/path/to/File-Backup-System/src/main.py</string>
        </array>
        <key>WorkingDirectory</key>
        <string>/path/to/File-Backup-System</string>
@@ -239,10 +284,10 @@ python3 main.py
 crontab -e
 
 # Add entry for every 30 minutes
-*/30 * * * * cd /path/to/File-Backup-System && /usr/local/bin/python3 main.py
+*/30 * * * * cd /path/to/File-Backup-System && /usr/local/bin/python3 src/main.py
 
 # Or daily at 2 AM
-0 2 * * * cd /path/to/File-Backup-System && /usr/local/bin/python3 main.py
+0 2 * * * cd /path/to/File-Backup-System && /usr/local/bin/python3 src/main.py
 ```
 
 ### Linux Setup
@@ -265,7 +310,7 @@ sudo pacman -S python python-pip libnotify zenity
 #### Method 1: Manual Execution
 ```bash
 cd /path/to/File-Backup-System
-python3 main.py
+python3 src/main.py
 ```
 
 #### Method 2: Systemd Service (Recommended)
@@ -320,11 +365,38 @@ python3 main.py
 crontab -e
 
 # Every 30 minutes
-*/30 * * * * cd /path/to/File-Backup-System && /usr/bin/python3 main.py
+*/30 * * * * cd /path/to/File-Backup-System && /usr/bin/python3 src/main.py
 
 # Daily at 3 AM
-0 3 * * * cd /path/to/File-Backup-System && /usr/bin/python3 main.py
+0 3 * * * cd /path/to/File-Backup-System && /usr/bin/python3 src/main.py
 ```
+
+## 🧪 Testing
+
+### Running Tests
+
+The project includes comprehensive unit tests and integration tests:
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run tests with coverage
+python -m pytest tests/ --cov=src
+
+# Run specific test file
+python -m pytest tests/test_backup_manager.py
+
+# Use the test runner script
+python scripts/run_tests.py
+```
+
+### Test Structure
+- `tests/test_backup_manager.py` - Tests for backup operations
+- `tests/test_constants.py` - Configuration validation tests
+- `tests/test_integration.py` - End-to-end integration tests
+- `tests/test_logging_config.py` - Logging system tests
+- `tests/test_temp_manager.py` - Temporary file management tests
 
 ## 📊 Monitoring and Logs
 
@@ -348,8 +420,14 @@ crontab -e
 2025-07-22 14:21:12 - backup_system - INFO - Starting temporary directory creation...
 2025-07-22 14:21:12 - backup_system - INFO - Successfully completed temporary directory creation
 2025-07-22 14:21:12 - backup_system - INFO - Starting file population to temporary directory...
-2025-07-22 14:21:15 - backup_system - INFO - Processing 1 source location(s)
+2025-07-22 14:21:15 - backup_system - INFO - Copy operation completed: 1 successful, 0 failed. Copied 42 files and 1 directories.
 2025-07-22 14:21:15 - backup_system - INFO - Successfully completed file population to temporary directory
+2025-07-22 14:21:15 - backup_system - INFO - Starting retrieving existing backup hashes...
+2025-07-22 14:21:15 - backup_system - INFO - Found 2 existing backup(s)
+2025-07-22 14:21:15 - backup_system - INFO - Successfully completed retrieving existing backup hashes
+2025-07-22 14:21:15 - backup_system - INFO - Starting creating ZIP backup...
+2025-07-22 14:21:16 - backup_system - INFO - ZIP archive created: 42 files, 15728640 bytes
+2025-07-22 14:21:16 - backup_system - INFO - Successfully completed creating ZIP backup
 ```
 
 ## 🚨 Troubleshooting
@@ -372,8 +450,9 @@ crontab -e
 
 #### Large File Handling
 - Monitor disk space in temporary directory location
-- Adjust `DEFAULT_TIMEOUT` in `constants.py` for large files
-- Consider excluding large, non-essential files
+- Adjust `DEFAULT_TIMEOUT` in `src/constants.py` for large files
+- Consider excluding large, non-essential files in `ignore_patterns()` function
+- Monitor temporary directory cleanup in logs for potential issues
 
 #### Network Backup Locations
 - Ensure network paths are accessible and mounted
@@ -383,10 +462,10 @@ crontab -e
 ### Performance Optimization
 
 #### For Large Datasets
-1. **Increase timeout values** in `constants.py`
+1. **Increase timeout values** in `src/constants.py`
 2. **Use SSD storage** for temporary directory
 3. **Schedule during off-peak hours**
-4. **Exclude unnecessary file types** in `ignore_patterns()`
+4. **Exclude unnecessary file types** in `ignore_patterns()` function in `src/file_operations.py`
 
 #### Memory Usage
 - The system processes files incrementally
@@ -407,23 +486,86 @@ crontab -e
 
 ### Data Privacy
 - Log files may contain file paths and system information
-- Configure log retention policies based on privacy requirements
+- Configure log retention policies based on privacy requirements using the rotating file handler settings
 - Consider log file encryption for sensitive environments
+- Review log levels to control information verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
+- Temporary directories are automatically cleaned up to prevent data leakage
 
-## 🔄 Maintenance
+## �️ Development
+
+### Project Dependencies
+
+The project uses modern Python development practices:
+
+- **Production Dependencies**: Listed in `requirements.txt` (currently uses only standard library)
+- **Development Dependencies**: Listed in `requirements-dev.txt` (testing frameworks, linting tools)
+- **Project Configuration**: `pyproject.toml` with Black, pytest, and mypy configurations
+
+### Code Quality Tools
+
+- **Black**: Code formatting with 88-character line length
+- **pytest**: Testing framework with comprehensive test coverage
+- **mypy**: Type checking for better code reliability
+- **Bandit**: Security analysis (configuration in `bandit.yaml`)
+
+### Development Setup
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run code formatting
+black src/ tests/
+
+# Run type checking
+mypy src/
+
+# Run security analysis
+bandit -c bandit.yaml -r src/
+
+# Run all tests with coverage
+python -m pytest tests/ --cov=src
+```
+
+## �🔄 Maintenance
 
 ### Regular Tasks
-1. **Monitor log files** for errors and warnings
-2. **Check backup integrity** periodically
-3. **Review disk space** in backup locations
-4. **Update source/destination paths** as needed
-5. **Test restore procedures** regularly
+1. **Monitor log files** in the `logs/` directory for errors and warnings
+2. **Check backup integrity** by verifying ZIP files can be opened and extracted
+3. **Review disk space** in backup locations and temporary directory
+4. **Update source/destination paths** in `src/constants.py` as needed
+5. **Test restore procedures** regularly by extracting backup files
+6. **Review ignored file patterns** in `src/file_operations.py` based on new file types
 
-### Updates
-- Keep Python installation updated
-- Review and update ignore patterns
-- Adjust timing based on data change patterns
-- Monitor system performance impact
+### Updates and Upgrades
+- Keep Python installation updated to latest stable version
+- Review and update ignore patterns for new system files or build artifacts
+- Adjust logging levels and rotation settings based on usage patterns
+- Monitor system performance impact and adjust timing intervals accordingly
+- Update notification settings based on changes in operating system APIs
+
+## 🏗️ Architecture Highlights
+
+### Modular Design
+The system is built with a clean separation of concerns:
+- **`main.py`**: Simple entry point with minimal logic
+- **`backup_workflow.py`**: Orchestrates the entire process with comprehensive error handling
+- **Specialized modules**: Each handles a specific aspect (files, backups, notifications, logging, temp management)
+- **Configuration centralization**: All settings in `constants.py` for easy management
+
+### Advanced Error Handling
+- **Graceful degradation**: System continues operating when non-critical components fail
+- **Comprehensive logging**: All operations logged with context and error details
+- **Automatic cleanup**: Temporary files cleaned up even when operations fail
+- **User interruption handling**: Clean shutdown on Ctrl+C with proper cleanup
+- **Notification fallbacks**: Multiple notification methods with graceful fallback to console output
+
+### Logging Architecture
+- **Rotating logs**: Automatic log rotation (10MB files, 5 backups) prevents disk space issues
+- **Structured logging**: Consistent formatting with timestamps and operation context
+- **Module-specific loggers**: Detailed tracking of which component generated each log entry
+- **Operation context managers**: Automatic start/success/failure logging for major operations
+- **Debug support**: Detailed debug logging for troubleshooting without overwhelming normal logs
 
 ## 📄 License
 
