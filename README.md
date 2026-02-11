@@ -14,13 +14,15 @@ A robust, cross-platform file backup solution with intelligent change detection,
 - **Error Recovery**: Robust error handling with automatic cleanup and graceful failure management
 - **Modular Architecture**: Clean separation of concerns with dedicated modules for each function
 - **Configurable Performance**: Tunable threading, buffer sizes, and memory mapping for optimal system resource usage
+- **Graphical Interface**: Easy-to-use GUI for configuring and running backups (Windows/macOS/Linux)
 
 ## 📁 Project Structure
 
 ```
 File-Backup-System/
 ├── src/                       # Main source code directory
-│   ├── main.py               # Entry point
+│   ├── main.py               # Entry point (CLI)
+│   ├── gui.py                # Graphical interface (NEW!)
 │   ├── backup_workflow.py    # Main workflow coordination
 │   ├── backup_manager.py     # ZIP creation and backup management
 │   ├── file_operations.py    # File operations and filtering
@@ -30,6 +32,8 @@ File-Backup-System/
 │   └── constants.py          # Configuration constants
 ├── tests/                    # Unit tests and integration tests
 ├── scripts/                  # Utility scripts
+│   ├── run.bat              # CLI launcher
+│   └── run_gui.bat           # GUI launcher (NEW!)
 ├── logs/                     # Log files (auto-created)
 ├── pyproject.toml           # Python project configuration
 └── requirements.txt         # Dependencies
@@ -55,10 +59,37 @@ File-Backup-System/
    python src/main.py
    ```
 
+### GUI (Graphical Interface)
+
+Launch the GUI for easy configuration:
+
+**Windows:**
+```bash
+python src/gui.py
+# Or double-click scripts/run_gui.bat
+```
+
+**macOS:**
+```bash
+python3 src/gui.py
+```
+
+**Linux:**
+```bash
+python3 src/gui.py
+```
+
+The GUI provides:
+- Easy folder selection (add/remove sources and backup locations)
+- Visual progress during backup
+- Real-time log output
+- No need to edit constants.py manually!
+
 ## 🖥️ Platform Setup
 
 ### Windows
-- **Manual**: `python src/main.py` or use `scripts/run.bat`
+- **CLI**: `python src/main.py` or use `scripts/run.bat`
+- **GUI**: Double-click `scripts/run_gui.bat` or run `python src/gui.py`
 - **Scheduled**: Use Task Scheduler for automatic backups
 - **Prerequisites**: Python 3.7+, optional admin privileges
 
